@@ -8,48 +8,50 @@ function webStyle(style: Record<string, unknown>) {
 }
 
 const heroArt = {
-  mythicForge: '/vitalquest-app/art/today-mythic.svg',
-  celestialPulse: '/vitalquest-app/art/today-celestial.svg',
-  titanCore: '/vitalquest-app/art/today-titan.svg',
+  mythicForge: '/vitalquest-app/art/today-mythic-premium.svg',
+  celestialPulse: '/vitalquest-app/art/today-celestial-premium.webp',
+  titanCore: '/vitalquest-app/art/today-titan-premium.webp',
 } as const;
 
-export function RpgFrame({
-  children,
-  style,
-  strong = false,
-}: {
-  children: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-  strong?: boolean;
-}) {
+const iconPaths = {
+  strength: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M18.9 2.6 21.4 5l-6.8 6.8 1.6 1.6-1.8 1.8-1.6-1.6-6.1 6.1H3.8v-2.9l6.1-6.1-1.5-1.6 1.8-1.8 1.6 1.6 7.1-6.3ZM4.8 18.1v.9h.9l5.5-5.5-.9-.9-5.5 5.5Z"/></svg>',
+  stamina: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M13.3 2 5.8 13h5l-1.1 9L18.2 10h-5l.1-8Z"/></svg>',
+  discipline: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="m12 2 2.1 5.9L20 10l-5.9 2.1L12 18l-2.1-5.9L4 10l5.9-2.1L12 2Zm0 5.1-.8 2.1-2.1.8 2.1.8.8 2.1.8-2.1 2.1-.8-2.1-.8-.8-2.1Z"/></svg>',
+  recovery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M12 21S4 16.2 4 9.7C4 6.6 6.2 5 8.5 5c1.4 0 2.7.7 3.5 1.8C12.8 5.7 14.1 5 15.5 5 17.8 5 20 6.6 20 9.7 20 16.2 12 21 12 21Zm-4.9-9.6h2.4l1.2-2.2 2.2 5 1.2-2.1h2.8v-1.6h-1.9l-2.2 3.8-2.1-4.8-1.2 2.1H7.1v1.8Z"/></svg>',
+} as const;
+
+function maskUri(svg: string) {
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+function displayFont(themeId: string) {
+  if (themeId === 'mythicForge') return Platform.select({ ios: 'Georgia', web: 'Georgia', default: 'serif' });
+  if (themeId === 'titanCore') return Platform.select({ ios: 'Avenir Next Condensed', web: 'Arial Narrow', default: 'sans-serif' });
+  return Platform.select({ ios: 'Avenir Next', web: 'Avenir Next', default: 'sans-serif' });
+}
+
+export function RpgFrame({ children, style, strong = false }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; strong?: boolean }) {
   const { themeId, theme } = useVitalTheme();
   const t = theme.tokens;
   const angular = themeId === 'titanCore';
-  const glow = themeId === 'celestialPulse';
-  const border = strong ? t.accent : themeId === 'celestialPulse' ? t.secondary : t.accentSoft;
-
   return (
     <View
       style={[
-        styles.frame,
+        styles.frameOuter,
         {
-          borderColor: `${border}${strong ? 'A8' : '72'}`,
-          backgroundColor: `${t.background}EE`,
-          borderRadius: angular ? 8 : radius.md,
+          borderColor: strong ? `${t.accent}D4` : `${t.accent}86`,
+          backgroundColor: `${t.background}F8`,
+          borderRadius: angular ? 7 : radius.md,
         },
-        webStyle({
-          boxShadow: glow
-            ? `0 0 0 1px ${t.secondary}16, 0 16px 50px rgba(0,0,0,.42), inset 0 0 28px ${t.secondary}0D`
-            : themeId === 'mythicForge'
-            ? `0 18px 48px rgba(0,0,0,.48), inset 0 0 25px ${t.accent}09`
-            : `0 18px 48px rgba(0,0,0,.52), inset 5px 0 0 ${t.accent}10`,
-        }),
+        webStyle({ boxShadow: themeId === 'celestialPulse' ? `0 18px 54px rgba(0,0,0,.52), 0 0 32px ${t.secondary}16` : `0 18px 54px rgba(0,0,0,.56)` }),
         style,
       ]}
     >
-      <CornerOrnaments />
-      {themeId === 'titanCore' ? <View style={[styles.titanRail, { backgroundColor: t.accent }]} /> : null}
-      {children}
+      <View style={[styles.frameInner, { borderColor: `${t.accent}32`, borderRadius: angular ? 4 : radius.sm }]}>
+        <CornerOrnaments />
+        {themeId === 'titanCore' ? <View style={[styles.titanRail, { backgroundColor: t.accent }]} /> : null}
+        {children}
+      </View>
     </View>
   );
 }
@@ -57,7 +59,7 @@ export function RpgFrame({
 function CornerOrnaments() {
   const { themeId, theme } = useVitalTheme();
   const c = theme.tokens.accent;
-  const size = themeId === 'titanCore' ? 16 : 22;
+  const size = themeId === 'titanCore' ? 14 : 20;
   return (
     <>
       <View style={[styles.corner, styles.cornerTL, { width: size, height: size, borderColor: c }]} />
@@ -71,52 +73,42 @@ function CornerOrnaments() {
 export function HeroScene() {
   const { themeId, theme } = useVitalTheme();
   const t = theme.tokens;
+  return (
+    <View
+      style={[
+        styles.hero,
+        { borderColor: `${t.accent}98`, backgroundColor: t.heroSurface },
+        webStyle({
+          backgroundImage: `linear-gradient(180deg, rgba(2,4,8,.05) 0%, rgba(2,4,8,.04) 54%, ${t.background}D0 100%), url('${heroArt[themeId]}')`,
+          backgroundSize: 'cover, cover',
+          backgroundPosition: 'center, center',
+          backgroundRepeat: 'no-repeat',
+          boxShadow: `inset 0 0 0 1px ${t.accent}18, inset 0 -72px 64px rgba(0,0,0,.32)`,
+        }),
+      ]}
+    >
+      <CornerOrnaments />
+      <View style={[styles.realmStamp, { borderColor: `${t.accent}72`, backgroundColor: `${t.background}CA` }]}>
+        <Text style={[styles.realmStampText, { color: t.accent }]}>{theme.name.toUpperCase()}</Text>
+      </View>
+    </View>
+  );
+}
+
+export function HeroIdentity() {
+  const { themeId, theme } = useVitalTheme();
+  const t = theme.tokens;
   const title = themeId === 'mythicForge' ? 'Good day, Warrior.' : themeId === 'celestialPulse' ? 'Rise Again.' : 'BUILT DIFFERENT.';
   const subtitle = themeId === 'mythicForge'
     ? 'Discipline today. A stronger tomorrow.'
     : themeId === 'celestialPulse'
     ? 'Small steps. Massive tomorrows.'
     : 'Discomfort today. Dominance tomorrow.';
-  const kicker = themeId === 'mythicForge' ? 'MYTHIC FORGE' : themeId === 'celestialPulse' ? 'CELESTIAL PULSE' : 'TITAN CORE';
 
   return (
-    <View
-      style={[
-        styles.hero,
-        { borderColor: `${t.accent}86`, backgroundColor: t.heroSurface },
-        webStyle({
-          backgroundImage: `linear-gradient(180deg, rgba(4,6,9,.08) 0%, rgba(4,6,9,.08) 48%, ${t.background}F5 100%), url('${heroArt[themeId]}')`,
-          backgroundSize: 'cover, cover',
-          backgroundPosition: 'center, center',
-          backgroundRepeat: 'no-repeat, no-repeat',
-          boxShadow: `inset 0 0 0 1px ${t.accent}18, 0 18px 46px rgba(0,0,0,.5)`,
-        }),
-      ]}
-    >
-      <CornerOrnaments />
-      <View style={styles.heroTopRow}>
-        <View style={[styles.realmBadge, { borderColor: `${t.accent}72`, backgroundColor: `${t.background}C8` }]}>
-          <Text style={[styles.realmBadgeText, { color: t.accent }]}>{kicker}</Text>
-        </View>
-        <View style={[styles.levelChip, { borderColor: `${t.accent}72`, backgroundColor: `${t.background}D8` }]}>
-          <Text style={[styles.levelChipText, { color: t.text }]}>LV 12</Text>
-        </View>
-      </View>
-      <View style={styles.heroCopy}>
-        <Text
-          style={[
-            styles.heroTitle,
-            {
-              color: t.text,
-              fontFamily: themeId === 'mythicForge' ? 'Georgia' : themeId === 'titanCore' ? 'Arial Narrow' : 'Avenir Next',
-              textTransform: themeId === 'titanCore' ? 'uppercase' : 'none',
-            },
-          ]}
-        >
-          {title}
-        </Text>
-        <Text style={[styles.heroSubtitle, { color: t.text }]}>{subtitle}</Text>
-      </View>
+    <View style={styles.identityBlock}>
+      <Text style={[styles.identityTitle, { color: t.text, fontFamily: displayFont(themeId), textTransform: themeId === 'titanCore' ? 'uppercase' : 'none' }]}>{title}</Text>
+      <Text style={[styles.identitySubtitle, { color: t.muted }]}>{subtitle}</Text>
     </View>
   );
 }
@@ -126,18 +118,21 @@ export function LevelMedallion({ level = 12, current = 320, max = 600 }: { level
   const t = theme.tokens;
   const pct = Math.max(0, Math.min(1, current / max));
   const deg = Math.round(pct * 360);
-  const ring = webStyle({
-    backgroundImage: `conic-gradient(${t.accent} 0deg ${deg}deg, ${t.surfaceElevated} ${deg}deg 360deg)`,
-    boxShadow: `0 0 38px ${t.accent}2A, inset 0 0 20px rgba(0,0,0,.5)`,
-  });
-
   return (
     <View style={styles.medallionWrap}>
-      <View style={[styles.medallionOuter, { borderColor: `${t.accent}92`, backgroundColor: t.surfaceElevated }, ring]}>
-        <View style={[styles.medallionInner, { backgroundColor: `${t.background}F4`, borderColor: `${t.accent}55` }]}>
-          <Text style={[styles.medallionLevel, { color: t.text }]}>{level}</Text>
-          <Text style={[styles.medallionLabel, { color: t.accent }]}>{themeId === 'titanCore' ? 'LEVEL' : 'Level'}</Text>
-          <Text style={[styles.medallionXp, { color: t.muted }]}>{current} / {max} XP</Text>
+      <View style={[styles.medallionHalo, { borderColor: `${t.accent}40` }]}>
+        <View
+          style={[
+            styles.medallionOuter,
+            { borderColor: `${t.accent}B8`, backgroundColor: t.surfaceElevated },
+            webStyle({ backgroundImage: `conic-gradient(${t.accent} 0deg ${deg}deg, ${t.surfaceElevated} ${deg}deg 360deg)`, boxShadow: `0 0 30px ${t.accent}24, inset 0 0 18px rgba(0,0,0,.6)` }),
+          ]}
+        >
+          <View style={[styles.medallionInner, { backgroundColor: `${t.background}FA`, borderColor: `${t.accent}5A` }]}>
+            <Text style={[styles.medallionLevel, { color: t.text, fontFamily: displayFont(themeId) }]}>{level}</Text>
+            <Text style={[styles.medallionLabel, { color: t.accent }]}>LEVEL</Text>
+            <Text style={[styles.medallionXp, { color: t.muted }]}>{current} / {max} XP</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -148,17 +143,21 @@ export function AttributeStrip() {
   const { theme } = useVitalTheme();
   const t = theme.tokens;
   const items = [
-    { glyph: '⚔', name: 'Strength', value: '+12%', color: t.strength },
-    { glyph: '◒', name: 'Stamina', value: '+8%', color: t.stamina },
-    { glyph: '✦', name: 'Discipline', value: '+10%', color: t.discipline },
-    { glyph: '♥', name: 'Recovery', value: '+6%', color: t.positive },
+    { icon: 'strength' as const, name: 'Strength', value: '+12%', color: t.strength, fallback: 'STR' },
+    { icon: 'stamina' as const, name: 'Stamina', value: '+8%', color: t.stamina, fallback: 'STA' },
+    { icon: 'discipline' as const, name: 'Discipline', value: '+10%', color: t.discipline, fallback: 'DIS' },
+    { icon: 'recovery' as const, name: 'Recovery', value: '+6%', color: t.positive, fallback: 'REC' },
   ];
   return (
     <View style={styles.attributeRow}>
       {items.map((item) => (
         <View key={item.name} style={styles.attributeItem}>
-          <View style={[styles.attributeMedal, { borderColor: `${item.color}88`, backgroundColor: `${item.color}13` }]}>
-            <Text style={[styles.attributeGlyph, { color: item.color }]}>{item.glyph}</Text>
+          <View style={[styles.attributeMedal, { borderColor: `${item.color}8A`, backgroundColor: `${item.color}0E` }]}>
+            {Platform.OS === 'web' ? (
+              <View style={[styles.attributeIcon, webStyle({ backgroundColor: item.color, WebkitMaskImage: maskUri(iconPaths[item.icon]), maskImage: maskUri(iconPaths[item.icon]), WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskPosition: 'center', maskPosition: 'center' })]} />
+            ) : (
+              <Text style={[styles.attributeFallback, { color: item.color }]}>{item.fallback}</Text>
+            )}
           </View>
           <Text style={[styles.attributeName, { color: t.text }]}>{item.name}</Text>
           <Text style={[styles.attributeValue, { color: item.color }]}>{item.value}</Text>
@@ -168,26 +167,26 @@ export function AttributeStrip() {
   );
 }
 
-export function QuestContract({ onPress }: { onPress?: () => void }) {
+export function QuestContract() {
   const { themeId, theme } = useVitalTheme();
   const t = theme.tokens;
   const questTitle = themeId === 'mythicForge' ? 'Forge Your Strength' : themeId === 'celestialPulse' ? 'Align Your Energy' : 'Hit Your Numbers';
-  const label = themeId === 'mythicForge' ? "TODAY'S QUEST" : themeId === 'celestialPulse' ? "TODAY'S MISSION" : "TODAY'S MISSION";
-  const icon = themeId === 'mythicForge' ? '◆' : themeId === 'celestialPulse' ? '✦' : '⬢';
-
+  const label = themeId === 'mythicForge' ? "TODAY'S QUEST" : "TODAY'S MISSION";
   return (
-    <View style={[styles.questContract, { borderColor: `${t.accent}66`, backgroundColor: `${t.heroSurface}F2` }]}>
-      <View style={[styles.questIcon, { borderColor: `${t.accent}72`, backgroundColor: `${t.accent}12` }]}>
-        <Text style={[styles.questIconText, { color: t.accent }]}>{icon}</Text>
-      </View>
-      <View style={styles.questBody}>
-        <Text style={[styles.questLabel, { color: t.accent }]}>{label}</Text>
-        <Text style={[styles.questTitle, { color: t.text }]}>{questTitle}</Text>
-        <Text style={[styles.questCopy, { color: t.muted }]}>Complete your workout</Text>
-      </View>
-      <View style={[styles.questReward, { borderColor: `${t.accent}55`, backgroundColor: `${t.background}AA` }]}>
-        <Text style={[styles.questRewardValue, { color: t.accent }]}>+210</Text>
-        <Text style={[styles.questRewardLabel, { color: t.muted }]}>XP</Text>
+    <View style={[styles.questOuter, { borderColor: `${t.accent}68`, backgroundColor: `${t.heroSurface}FA` }]}>
+      <View style={[styles.questInner, { borderColor: `${t.accent}2C` }]}>
+        <View style={[styles.questSigil, { borderColor: `${t.accent}70`, backgroundColor: `${t.accent}0E` }]}>
+          <View style={[styles.questDiamond, { borderColor: t.accent }]} />
+        </View>
+        <View style={styles.questBody}>
+          <Text style={[styles.questLabel, { color: t.accent }]}>{label}</Text>
+          <Text style={[styles.questTitle, { color: t.text, fontFamily: displayFont(themeId) }]}>{questTitle}</Text>
+          <Text style={[styles.questCopy, { color: t.muted }]}>Complete your workout</Text>
+        </View>
+        <View style={styles.questReward}>
+          <Text style={[styles.questRewardValue, { color: t.accent }]}>+210</Text>
+          <Text style={[styles.questRewardLabel, { color: t.muted }]}>XP</Text>
+        </View>
       </View>
     </View>
   );
@@ -197,57 +196,54 @@ export function SectionPlaque({ children }: { children: React.ReactNode }) {
   const { themeId, theme } = useVitalTheme();
   const t = theme.tokens;
   return (
-    <View style={styles.sectionPlaqueRow}>
-      <View style={[styles.sectionRule, { backgroundColor: `${t.accent}44` }]} />
-      <View style={[styles.sectionPlaque, { borderColor: `${t.accent}55`, backgroundColor: `${t.background}DD`, borderRadius: themeId === 'titanCore' ? 4 : 999 }]}>
-        <Text style={[styles.sectionPlaqueText, { color: t.accent }]}>{children}</Text>
-      </View>
-      <View style={[styles.sectionRule, { backgroundColor: `${t.accent}44` }]} />
+    <View style={styles.sectionHeader}>
+      <Text style={[styles.sectionTitle, { color: t.text, fontFamily: displayFont(themeId) }]}>{children}</Text>
+      <View style={[styles.sectionRule, { backgroundColor: `${t.accent}55` }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  frame: { borderWidth: 1, overflow: 'hidden', position: 'relative' },
-  titanRail: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  corner: { position: 'absolute', zIndex: 5, opacity: .9 },
-  cornerTL: { left: 5, top: 5, borderLeftWidth: 2, borderTopWidth: 2 },
-  cornerTR: { right: 5, top: 5, borderRightWidth: 2, borderTopWidth: 2 },
-  cornerBL: { left: 5, bottom: 5, borderLeftWidth: 2, borderBottomWidth: 2 },
-  cornerBR: { right: 5, bottom: 5, borderRightWidth: 2, borderBottomWidth: 2 },
-  hero: { height: 350, borderWidth: 1, borderRadius: radius.md, overflow: 'hidden', padding: 14, justifyContent: 'space-between' },
-  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  realmBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  realmBadgeText: { fontSize: 8, fontWeight: '900', letterSpacing: 1.45 },
-  levelChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  levelChipText: { fontSize: 9, fontWeight: '900', letterSpacing: .9 },
-  heroCopy: { padding: 10, paddingTop: 60 },
-  heroTitle: { fontSize: 31, lineHeight: 35, fontWeight: '900', textShadowColor: 'rgba(0,0,0,.75)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 },
-  heroSubtitle: { fontSize: 12, lineHeight: 18, fontWeight: '700', marginTop: 5, maxWidth: 350, textShadowColor: 'rgba(0,0,0,.85)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
-  medallionWrap: { alignItems: 'center', marginTop: -42, zIndex: 5 },
-  medallionOuter: { width: 142, height: 142, borderRadius: 71, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  medallionInner: { width: 118, height: 118, borderRadius: 59, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  medallionLevel: { fontSize: 38, lineHeight: 40, fontWeight: '900' },
-  medallionLabel: { fontSize: 10, fontWeight: '900', marginTop: 1 },
-  medallionXp: { fontSize: 8, fontWeight: '700', marginTop: 4 },
-  attributeRow: { flexDirection: 'row', paddingHorizontal: 4, gap: 4, marginTop: 16 },
+  frameOuter: { borderWidth: 1, padding: 4, overflow: 'hidden', position: 'relative' },
+  frameInner: { borderWidth: 1, overflow: 'hidden', position: 'relative', padding: 8 },
+  titanRail: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
+  corner: { position: 'absolute', zIndex: 8, opacity: .92 },
+  cornerTL: { left: 4, top: 4, borderLeftWidth: 2, borderTopWidth: 2 },
+  cornerTR: { right: 4, top: 4, borderRightWidth: 2, borderTopWidth: 2 },
+  cornerBL: { left: 4, bottom: 4, borderLeftWidth: 2, borderBottomWidth: 2 },
+  cornerBR: { right: 4, bottom: 4, borderRightWidth: 2, borderBottomWidth: 2 },
+  hero: { height: 264, borderWidth: 1, borderRadius: radius.sm, overflow: 'hidden', padding: 12 },
+  realmStamp: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  realmStampText: { fontSize: 7, fontWeight: '900', letterSpacing: 1.55 },
+  identityBlock: { alignItems: 'center', paddingTop: 16, paddingHorizontal: 16 },
+  identityTitle: { fontSize: 27, lineHeight: 32, fontWeight: '900', textAlign: 'center', letterSpacing: -.5 },
+  identitySubtitle: { fontSize: 11, lineHeight: 17, fontWeight: '600', textAlign: 'center', marginTop: 4, maxWidth: 340 },
+  medallionWrap: { alignItems: 'center', marginTop: 18 },
+  medallionHalo: { width: 140, height: 140, borderRadius: 70, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  medallionOuter: { width: 126, height: 126, borderRadius: 63, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  medallionInner: { width: 106, height: 106, borderRadius: 53, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  medallionLevel: { fontSize: 35, lineHeight: 37, fontWeight: '900' },
+  medallionLabel: { fontSize: 8, fontWeight: '900', letterSpacing: 1.5, marginTop: 1 },
+  medallionXp: { fontSize: 7, fontWeight: '700', marginTop: 4 },
+  attributeRow: { flexDirection: 'row', paddingHorizontal: 5, gap: 5, marginTop: 18 },
   attributeItem: { flex: 1, alignItems: 'center' },
-  attributeMedal: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  attributeGlyph: { fontSize: 16 },
-  attributeName: { fontSize: 8, fontWeight: '900', marginTop: 6, textAlign: 'center' },
-  attributeValue: { fontSize: 8, fontWeight: '900', marginTop: 2 },
-  questContract: { borderWidth: 1, borderRadius: radius.md, minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, marginTop: 18 },
-  questIcon: { width: 54, height: 54, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  questIconText: { fontSize: 23, fontWeight: '900' },
+  attributeMedal: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  attributeIcon: { width: 19, height: 19 },
+  attributeFallback: { fontSize: 8, fontWeight: '900', letterSpacing: .3 },
+  attributeName: { fontSize: 7.5, fontWeight: '800', marginTop: 6, textAlign: 'center' },
+  attributeValue: { fontSize: 7.5, fontWeight: '900', marginTop: 2 },
+  questOuter: { borderWidth: 1, borderRadius: radius.sm, padding: 3, marginTop: 22 },
+  questInner: { borderWidth: 1, borderRadius: 7, minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
+  questSigil: { width: 52, height: 52, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  questDiamond: { width: 18, height: 18, borderWidth: 2, transform: [{ rotate: '45deg' }] },
   questBody: { flex: 1 },
-  questLabel: { fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
-  questTitle: { fontSize: 17, fontWeight: '900', marginTop: 3 },
-  questCopy: { fontSize: 9, marginTop: 3 },
-  questReward: { width: 58, height: 58, borderRadius: 29, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  questRewardValue: { fontSize: 12, fontWeight: '900' },
-  questRewardLabel: { fontSize: 7, fontWeight: '900', marginTop: 1 },
-  sectionPlaqueRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginVertical: 4 },
-  sectionRule: { height: 1, flex: 1 },
-  sectionPlaque: { borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 },
-  sectionPlaqueText: { fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },
+  questLabel: { fontSize: 7, fontWeight: '900', letterSpacing: 1.35 },
+  questTitle: { fontSize: 16, lineHeight: 19, fontWeight: '900', marginTop: 3 },
+  questCopy: { fontSize: 8.5, marginTop: 4 },
+  questReward: { alignItems: 'center', minWidth: 50 },
+  questRewardValue: { fontSize: 13, fontWeight: '900' },
+  questRewardLabel: { fontSize: 7, fontWeight: '900', letterSpacing: 1.1, marginTop: 1 },
+  sectionHeader: { alignItems: 'center', marginTop: 2, marginBottom: 8 },
+  sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.8, textAlign: 'center', textTransform: 'uppercase' },
+  sectionRule: { width: 56, height: 1, marginTop: 7 },
 });

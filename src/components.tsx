@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { radius, spacing } from './theme';
 import { useVitalTheme } from './ThemeProvider';
+import { ThemeBackdrop } from './visual';
 
 export function Screen({
   children,
@@ -22,11 +23,17 @@ export function Screen({
   const backgroundColor = theme.tokens.background;
 
   if (!scroll) {
-    return <SafeAreaView style={[styles.safe, { backgroundColor }]}>{children}</SafeAreaView>;
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor }]}>
+        <ThemeBackdrop />
+        <View style={styles.fill}>{children}</View>
+      </SafeAreaView>
+    );
   }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor }]}>
+      <ThemeBackdrop />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -54,15 +61,24 @@ export function Card({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { theme } = useVitalTheme();
+  const { themeId, theme } = useVitalTheme();
+  const webShadow =
+    themeId === 'celestialPulse'
+      ? ({ boxShadow: `0 14px 34px rgba(0,0,0,.26), inset 0 1px 0 ${theme.tokens.text}10`, backdropFilter: 'blur(12px)' } as any)
+      : themeId === 'mythicForge'
+      ? ({ boxShadow: `0 16px 38px rgba(0,0,0,.32), inset 0 1px 0 ${theme.tokens.accent}0D` } as any)
+      : ({ boxShadow: '0 14px 32px rgba(0,0,0,.38)' } as any);
+
   return (
     <View
       style={[
         styles.card,
         {
-          backgroundColor: theme.tokens.surface,
+          backgroundColor: `${theme.tokens.surface}EE`,
           borderColor: theme.tokens.border,
+          borderRadius: themeId === 'titanCore' ? radius.md : radius.lg,
         },
+        webShadow,
         style,
       ]}
     >
@@ -89,6 +105,7 @@ export function ProgressBar({
             width: `${clamped * 100}%`,
             backgroundColor: accent ?? theme.tokens.accent,
           },
+          ({ boxShadow: `0 0 18px ${(accent ?? theme.tokens.accent)}40` } as any),
         ]}
       />
     </View>
@@ -105,7 +122,10 @@ export function SectionHeader({
   const { theme } = useVitalTheme();
   return (
     <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: theme.tokens.text }]}>{title}</Text>
+      <View style={styles.sectionTitleWrap}>
+        <View style={[styles.sectionTick, { backgroundColor: theme.tokens.accent }]} />
+        <Text style={[styles.sectionTitle, { color: theme.tokens.text }]}>{title}</Text>
+      </View>
       {right ? (
         <Text style={[styles.sectionRight, { color: theme.tokens.accent }]}>{right}</Text>
       ) : null}
@@ -115,6 +135,10 @@ export function SectionHeader({
 
 const styles = StyleSheet.create({
   safe: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  fill: {
     flex: 1,
   },
   content: {
@@ -139,7 +163,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderRadius: radius.lg,
     padding: spacing.md,
   },
   track: {
@@ -156,6 +179,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing.sm,
+  },
+  sectionTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  sectionTick: {
+    width: 16,
+    height: 2,
+    borderRadius: 999,
   },
   sectionTitle: {
     fontWeight: '800',

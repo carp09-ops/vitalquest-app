@@ -6,45 +6,23 @@ export type CompletedSet = {
 };
 
 export function volumeForSets(sets: CompletedSet[]) {
-  return sets.reduce(
-    (total, set) => total + (set.completed ? set.weight * set.reps : 0),
-    0
-  );
+  return sets.reduce((total, set) => total + (set.completed ? set.weight * set.reps : 0), 0);
 }
 
-export function calculateSessionXP(args: {
-  completedSets: number;
-  durationMinutes: number;
-  prCount: number;
-  streakDays: number;
-}) {
+export function calculateSessionXP(args: { completedSets: number; durationMinutes: number; prCount: number; streakDays: number; }) {
   const completion = 100;
   const work = args.completedSets * 6;
   const duration = Math.min(60, Math.floor(args.durationMinutes * 1.25));
   const prs = args.prCount * 30;
   const streak = Math.min(50, args.streakDays * 5);
-
   return completion + work + duration + prs + streak;
 }
 
-export function calculateStrengthXP(args: {
-  completedSets: number;
-  volume: number;
-  prCount: number;
-}) {
-  return (
-    12 +
-    args.completedSets * 3 +
-    Math.min(40, Math.floor(args.volume / 1500)) +
-    args.prCount * 10
-  );
+export function calculateStrengthXP(args: { completedSets: number; volume: number; prCount: number; }) {
+  return 12 + args.completedSets * 3 + Math.min(40, Math.floor(args.volume / 1500)) + args.prCount * 10;
 }
 
-export function calculateEnduranceXP(args: {
-  distanceMiles: number;
-  durationMinutes: number;
-  streakDays: number;
-}) {
+export function calculateEnduranceXP(args: { distanceMiles: number; durationMinutes: number; streakDays: number; }) {
   const completion = 90;
   const distance = Math.floor(args.distanceMiles * 24);
   const duration = Math.min(55, Math.floor(args.durationMinutes * 1.1));
@@ -52,21 +30,29 @@ export function calculateEnduranceXP(args: {
   return completion + distance + duration + streak;
 }
 
-export function calculateStaminaXP(args: {
-  distanceMiles: number;
-  durationMinutes: number;
-}) {
+export function calculateStaminaXP(args: { distanceMiles: number; durationMinutes: number; }) {
   return 10 + Math.floor(args.distanceMiles * 11) + Math.min(28, Math.floor(args.durationMinutes / 3));
 }
 
-export function calculateAgilityXP(args: {
-  distanceMiles: number;
-  avgPaceSeconds: number;
-}) {
-  const paceBonus = args.avgPaceSeconds > 0
-    ? Math.max(0, Math.min(22, Math.round((720 - args.avgPaceSeconds) / 18)))
-    : 0;
+export function calculateAgilityXP(args: { distanceMiles: number; avgPaceSeconds: number; }) {
+  const paceBonus = args.avgPaceSeconds > 0 ? Math.max(0, Math.min(22, Math.round((720 - args.avgPaceSeconds) / 18))) : 0;
   return 6 + Math.floor(args.distanceMiles * 5) + paceBonus;
+}
+
+export function calculateRecoveryXP(args: { durationMinutes: number; completedBlocks: number; streakDays: number; }) {
+  const completion = 70;
+  const duration = Math.min(45, Math.floor(args.durationMinutes * 1.5));
+  const blocks = args.completedBlocks * 8;
+  const streak = Math.min(30, args.streakDays * 3);
+  return completion + duration + blocks + streak;
+}
+
+export function calculateVitalityXP(args: { durationMinutes: number; completedBlocks: number; }) {
+  return 10 + Math.floor(args.durationMinutes * 0.9) + args.completedBlocks * 4;
+}
+
+export function calculateDisciplineXP(args: { completedBlocks: number; streakDays: number; }) {
+  return 6 + args.completedBlocks * 3 + Math.min(24, args.streakDays * 2);
 }
 
 export function paceSecondsPerMile(distanceMiles: number, durationMinutes: number) {
@@ -88,9 +74,7 @@ export function cumulativeXpForLevel(level: number) {
 
 export function levelFromTotalXP(totalXP: number) {
   let level = 1;
-  while (cumulativeXpForLevel(level + 1) <= totalXP) {
-    level += 1;
-  }
+  while (cumulativeXpForLevel(level + 1) <= totalXP) level += 1;
   return level;
 }
 
@@ -100,11 +84,5 @@ export function levelProgress(totalXP: number) {
   const ceiling = cumulativeXpForLevel(level + 1);
   const current = totalXP - floor;
   const needed = ceiling - floor;
-
-  return {
-    level,
-    current,
-    needed,
-    ratio: needed === 0 ? 0 : current / needed,
-  };
+  return { level, current, needed, ratio: needed === 0 ? 0 : current / needed };
 }

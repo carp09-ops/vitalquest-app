@@ -1,85 +1,102 @@
 # VitalQuest TestFlight Setup (iPad-first)
 
-The repository is already configured to build iOS on Expo Application Services (EAS) and submit the result to TestFlight whenever a commit reaches `main`.
+This repository is configured so development can happen from an iPad with no local Mac, Codespace, tunnel, or Expo Go session.
 
-No local Mac, Codespace, tunnel, or Expo Go session is required after the one-time Expo/Apple account setup below.
+The steady-state flow is:
 
-## What is already configured
+`GitHub main → GitHub Actions → EAS Build → TestFlight → iPad`
 
-- Expo SDK 57 / React Native native project
+## Already configured in the repository
+
+- Expo SDK 57 / React Native project
 - iPad support enabled
 - iOS bundle identifier: `com.vitalquestapp.mobile`
-- EAS production build profile
-- Remote iOS build-number management with automatic incrementing
-- EAS Workflow at `.eas/workflows/submit-ios.yml`
-- Workflow trigger: every push to `main`
-- Workflow action: build iOS production binary, then submit it to TestFlight
+- EAS production profile
+- Remote build-number management with automatic incrementing
+- `.github/workflows/bootstrap-eas.yml` for the one-time cloud bootstrap
+- `.github/workflows/testflight.yml` for automatic builds after bootstrap
+- Automatic TestFlight workflow on pushes to `main`
 
-## One-time browser/account setup
+## One-time setup from Safari on the iPad
 
-### 1. Create or sign in to an Expo account
+### 1. Expo account + access token
 
-Open https://expo.dev/ on the iPad and sign in.
+Sign in at https://expo.dev/.
 
-### 2. Create the EAS project
+Create an Expo personal access token from the Expo access-token settings page. Keep it private.
 
-Create a project named `vitalquest-app` in Expo. The project slug must match `vitalquest-app`.
+### 2. Apple Developer membership
 
-EAS will assign the project a Project ID. Once created, link this repository to that EAS project.
+TestFlight distribution requires an active paid Apple Developer Program membership.
 
-### 3. Connect GitHub to Expo
+### 3. Create an App Store Connect API key
 
-In Expo:
+In App Store Connect, create an API key that has enough access to manage the VitalQuest app, signing workflow, and TestFlight submission. For a new signing setup, use an Apple account/key with the required administrative access.
 
-1. Open Account Settings.
-2. Under Connections, connect GitHub.
-3. Install/authorize the Expo GitHub App if prompted.
-4. Open the VitalQuest EAS project.
-5. Open Project settings → GitHub.
-6. Connect `carp09-ops/vitalquest-app`.
-7. Leave the base directory as `/`.
+Save these values:
 
-### 4. Confirm Apple Developer membership
+- API Key ID
+- Issuer ID
+- the downloaded `.p8` private key file
+- Apple Team ID
+- Apple Team Type (`INDIVIDUAL`, `COMPANY_OR_ORGANIZATION`, or `IN_HOUSE`)
 
-TestFlight requires an active paid Apple Developer Program membership.
+Apple only allows the `.p8` private key to be downloaded once. Store it securely.
 
-### 5. Configure iOS signing and App Store Connect credentials
+### 4. Add GitHub repository secrets
 
-The production build needs:
+On the iPad, open:
 
-- an Apple distribution certificate
-- an App Store distribution provisioning profile
-- App Store Connect credentials/API key for TestFlight submission
+`carp09-ops/vitalquest-app → Settings → Secrets and variables → Actions → New repository secret`
 
-Prefer Expo-managed credentials. Expo can reuse these for every later cloud build.
+Add these seven secrets:
 
-If credentials already exist, they can be managed from the EAS project under Project settings → Configuration → Credentials.
+| Secret | Value |
+| --- | --- |
+| `EXPO_TOKEN` | Expo personal access token |
+| `EXPO_ACCOUNT` | Expo account/username that should own VitalQuest |
+| `EXPO_ASC_API_KEY_P8` | Full text contents of the Apple `.p8` key, including BEGIN/END lines |
+| `EXPO_ASC_KEY_ID` | App Store Connect API Key ID |
+| `EXPO_ASC_ISSUER_ID` | App Store Connect Issuer ID |
+| `EXPO_APPLE_TEAM_ID` | Apple Developer Team ID |
+| `EXPO_APPLE_TEAM_TYPE` | Usually `INDIVIDUAL` for a personal developer account or `COMPANY_OR_ORGANIZATION` for an organization |
 
-For a brand-new Apple setup, an authorized Apple Developer user must create/configure the signing credentials once. After they are stored with EAS, future production builds are non-interactive.
+Do not commit any of these values to the repository and do not paste them into chat.
 
-### 6. Connect/create the App Store Connect app
+### 5. Run the one-time bootstrap workflow
 
-The App Store Connect record must use the same iOS bundle identifier:
+Open the repository's **Actions** tab.
 
-`com.vitalquestapp.mobile`
+1. Select **Bootstrap VitalQuest EAS**.
+2. Tap **Run workflow**.
+3. Leave the branch as `main`.
+4. Run it.
 
-App name: `VitalQuest`
+The workflow will:
 
-Once the App Store Connect app and credentials are linked to EAS, the TestFlight workflow can submit automatically.
+1. authenticate to Expo using `EXPO_TOKEN`
+2. create or link the `vitalquest-app` EAS project
+3. persist the generated EAS project ID back into `app.json`
+4. prepare the App Store Connect API key on the GitHub runner
+5. request the first production iOS build
+6. request automatic TestFlight submission
 
-## Day-to-day workflow after setup
+## Important first-build note
 
-1. Changes are committed to `main` in GitHub.
-2. EAS sees the push.
-3. `VitalQuest TestFlight` starts automatically.
-4. EAS creates a production iOS build.
-5. The build number is incremented automatically.
-6. The finished build is submitted to TestFlight.
-7. Apple processes the build.
-8. Open TestFlight on the iPad and install/update VitalQuest.
+Expo's normal supported setup expects the first iOS production build to be run interactively so it can create/confirm signing credentials. The bootstrap workflow is our iPad-only path around having no local terminal and supplies the App Store Connect API key/team information to the EAS build environment.
 
-## Important
+If Apple/EAS still requires a one-time signing confirmation, the bootstrap run will fail with a specific credential error instead of exposing secrets. Use that workflow error as the next setup checkpoint; after credentials exist on EAS, future builds are fully non-interactive.
 
-The workflow file is intentionally committed now, but it will not successfully produce a TestFlight build until the EAS project, GitHub connection, Apple signing credentials, and App Store Connect connection have been completed.
+## After the first successful build
 
-After the first successful build, normal app development can happen entirely through GitHub + EAS + TestFlight from the iPad.
+Normal testing becomes automatic:
+
+1. Changes are committed to `main`.
+2. **VitalQuest TestFlight** starts in GitHub Actions.
+3. GitHub queues an EAS production iOS build.
+4. EAS increments the iOS build number.
+5. The finished binary is submitted to TestFlight.
+6. Apple processes it.
+7. Open TestFlight on the iPad and install/update VitalQuest.
+
+The automatic workflow deliberately skips the bot commit generated by the bootstrap workflow so the initial setup does not queue two duplicate builds.

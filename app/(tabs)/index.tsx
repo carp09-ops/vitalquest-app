@@ -1,6 +1,6 @@
 import React from 'react';
-import PremiumToday from '../../src/PremiumToday';
+import TodayV2 from '../../src/TodayV2';
 
 export default function TodayScreen() {
-  return <PremiumToday />;
+  return <TodayV2 />;
 }

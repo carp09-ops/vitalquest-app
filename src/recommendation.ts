@@ -1,6 +1,7 @@
 import { ProgressionSnapshot } from './progression';
 
 export type TrialId = 'push' | 'pull' | 'legs' | 'run' | 'recovery';
+type ResistanceTrialId = 'push' | 'pull' | 'legs';
 
 export type TrainingRecommendation = {
   templateId: TrialId;
@@ -35,9 +36,9 @@ export function getTrainingRecommendation(snapshot: ProgressionSnapshot): Traini
     };
   }
 
-  const rotation: TrialId[] = ['push', 'pull', 'legs'];
+  const rotation: ResistanceTrialId[] = ['push', 'pull', 'legs'];
   const templateId = rotation[snapshot.workoutCount % rotation.length];
-  const copy: Record<'push'|'pull'|'legs', Omit<TrainingRecommendation,'templateId'>> = {
+  const copy: Record<ResistanceTrialId, Omit<TrainingRecommendation, 'templateId'>> = {
     push: { label: 'PRIMARY TRIAL', title: 'Build pressing strength.', reason: 'Your current rotation points to Push Day. Previous working weights are ready so you can progress without rebuilding the session.', attributeFocus: 'STRENGTH · POWER' },
     pull: { label: 'PRIMARY TRIAL', title: 'Build pulling strength and control.', reason: 'Your current rotation points to Pull Day, balancing pressing work with back strength and control.', attributeFocus: 'STRENGTH · CONTROL' },
     legs: { label: 'PRIMARY TRIAL', title: 'Raise lower-body capacity.', reason: 'Your current rotation points to Leg Day, keeping total-body strength development balanced.', attributeFocus: 'STRENGTH · CAPACITY' },

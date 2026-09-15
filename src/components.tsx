@@ -8,7 +8,8 @@ import {
   ViewStyle,
   StyleProp,
 } from 'react-native';
-import { colors, radius, spacing } from './theme';
+import { radius, spacing } from './theme';
+import { useVitalTheme } from './ThemeProvider';
 
 export function Screen({
   children,
@@ -17,12 +18,15 @@ export function Screen({
   children: React.ReactNode;
   scroll?: boolean;
 }) {
+  const { theme } = useVitalTheme();
+  const backgroundColor = theme.tokens.background;
+
   if (!scroll) {
-    return <SafeAreaView style={styles.safe}>{children}</SafeAreaView>;
+    return <SafeAreaView style={[styles.safe, { backgroundColor }]}>{children}</SafeAreaView>;
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -34,11 +38,13 @@ export function Screen({
 }
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.eyebrow}>{children}</Text>;
+  const { theme } = useVitalTheme();
+  return <Text style={[styles.eyebrow, { color: theme.tokens.accent }]}>{children}</Text>;
 }
 
 export function Title({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.title}>{children}</Text>;
+  const { theme } = useVitalTheme();
+  return <Text style={[styles.title, { color: theme.tokens.text }]}>{children}</Text>;
 }
 
 export function Card({
@@ -48,25 +54,40 @@ export function Card({
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  const { theme } = useVitalTheme();
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.tokens.surface,
+          borderColor: theme.tokens.border,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 export function ProgressBar({
   value,
-  accent = colors.gold,
+  accent,
 }: {
   value: number;
   accent?: string;
 }) {
+  const { theme } = useVitalTheme();
   const clamped = Math.max(0, Math.min(1, value));
   return (
-    <View style={styles.track}>
+    <View style={[styles.track, { backgroundColor: theme.tokens.surfaceElevated }]}>
       <View
         style={[
           styles.fill,
           {
             width: `${clamped * 100}%`,
-            backgroundColor: accent,
+            backgroundColor: accent ?? theme.tokens.accent,
           },
         ]}
       />
@@ -81,10 +102,13 @@ export function SectionHeader({
   title: string;
   right?: string;
 }) {
+  const { theme } = useVitalTheme();
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {right ? <Text style={styles.sectionRight}>{right}</Text> : null}
+      <Text style={[styles.sectionTitle, { color: theme.tokens.text }]}>{title}</Text>
+      {right ? (
+        <Text style={[styles.sectionRight, { color: theme.tokens.accent }]}>{right}</Text>
+      ) : null}
     </View>
   );
 }
@@ -92,30 +116,28 @@ export function SectionHeader({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   content: {
     padding: spacing.md,
     paddingBottom: 120,
     gap: spacing.md,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
   eyebrow: {
-    color: colors.gold,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
   title: {
-    color: colors.text,
     fontSize: 34,
     lineHeight: 39,
     fontWeight: '900',
     letterSpacing: -1,
   },
   card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.lg,
     padding: spacing.md,
@@ -123,7 +145,6 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface2,
     overflow: 'hidden',
   },
   fill: {
@@ -137,12 +158,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   sectionTitle: {
-    color: colors.text,
     fontWeight: '800',
     fontSize: 18,
   },
   sectionRight: {
-    color: colors.gold,
     fontWeight: '700',
     fontSize: 13,
   },

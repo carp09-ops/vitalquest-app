@@ -1,4 +1,5 @@
 import { ProgressionSnapshot } from './progression';
+import { TrainingIntelligence } from './trainingIntelligence';
 
 export type ForgeFocus = 'adaptive' | 'upper' | 'lower' | 'full';
 
@@ -48,7 +49,19 @@ const LIBRARY: Record<Exclude<ForgeFocus,'adaptive'>, Omit<GeneratedExercise,'se
   ],
 };
 
-function chooseAdaptiveFocus(snapshot: ProgressionSnapshot): Exclude<ForgeFocus,'adaptive'> {
+function recentBias(intelligence?: TrainingIntelligence): Exclude<ForgeFocus,'adaptive'> | null {
+  if (!intelligence?.recentResistanceMix.length) return null;
+  const recent = intelligence.recentResistanceMix.slice(0,3);
+  const upperCount = recent.filter(id => ['push','pull','ai-upper'].includes(id)).length;
+  const lowerCount = recent.filter(id => ['legs','ai-lower'].includes(id)).length;
+  if (upperCount >= 2) return 'lower';
+  if (lowerCount >= 2) return 'upper';
+  return null;
+}
+
+function chooseAdaptiveFocus(snapshot: ProgressionSnapshot, intelligence?: TrainingIntelligence): Exclude<ForgeFocus,'adaptive'> {
+  const historyChoice = recentBias(intelligence);
+  if (historyChoice) return historyChoice;
   const endurance = snapshot.staminaXP + snapshot.agilityXP;
   if (snapshot.thisWeekResistanceWorkouts >= 3 && snapshot.thisWeekRecoverySessions === 0) return 'full';
   if (snapshot.strengthXP > endurance * 1.35 && snapshot.workoutCount > 2) return 'lower';
@@ -63,15 +76,17 @@ export function generateWorkoutPlan(args: {
   targetXP: number;
   focus: ForgeFocus;
   snapshot: ProgressionSnapshot;
+  intelligence?: TrainingIntelligence;
 }): GeneratedWorkoutPlan {
   const targetXP = Math.max(140, Math.min(390, Math.round(args.targetXP)));
-  const resolvedFocus = args.focus === 'adaptive' ? chooseAdaptiveFocus(args.snapshot) : args.focus;
+  const resolvedFocus = args.focus === 'adaptive' ? chooseAdaptiveFocus(args.snapshot,args.intelligence) : args.focus;
   const estimatedMinutes = targetXP <= 180 ? 28 : targetXP <= 240 ? 38 : targetXP <= 310 ? 50 : 62;
   const baseWithoutSets = 100 + Math.min(60, Math.floor(estimatedMinutes * 1.25)) + Math.min(50, args.snapshot.streakDays * 5);
   const desiredSets = Math.max(6, Math.min(24, Math.round((targetXP - baseWithoutSets) / 6)));
   const exerciseCount = Math.max(3, Math.min(6, Math.ceil(desiredSets / 4)));
   const pool = LIBRARY[resolvedFocus];
-  const rotation = args.snapshot.workoutCount % pool.length;
+  const historyOffset = args.intelligence?.generatedSessions ?? 0;
+  const rotation = (args.snapshot.workoutCount + historyOffset) % pool.length;
   const selected = Array.from({length: exerciseCount}, (_, index) => pool[(rotation + index) % pool.length]);
   let remaining = desiredSets;
   const exercises = selected.map((exercise, index) => {
@@ -83,10 +98,12 @@ export function generateWorkoutPlan(args: {
   });
   const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
   const projectedXP = projectedSessionXP(totalSets, estimatedMinutes, args.snapshot.streakDays);
-
+  const historyText = args.intelligence?.recent.length
+    ? ` Your last ${args.intelligence.recent.length} sessions averaged ${args.intelligence.averageXP} XP over ${args.intelligence.averageDuration} minutes.`
+    : '';
   const rationale = args.focus === 'adaptive'
-    ? `VitalQuest used your current progression balance, ${args.snapshot.thisWeekResistanceWorkouts} resistance sessions this week, and ${args.snapshot.streakDays}-day streak to choose a ${resolvedFocus}-body emphasis near ${targetXP} XP.`
-    : `You selected ${resolvedFocus}-body training. VitalQuest scaled exercise count, working sets and estimated duration toward a ${targetXP} XP target.`;
+    ? `VitalQuest used your progression balance, recent resistance mix, ${args.snapshot.thisWeekResistanceWorkouts} resistance sessions this week, and ${args.snapshot.streakDays}-day streak to choose a ${resolvedFocus}-body emphasis near ${targetXP} XP.${historyText}`
+    : `You selected ${resolvedFocus}-body training. VitalQuest scaled exercise count, working sets and estimated duration toward a ${targetXP} XP target.${historyText}`;
 
   return {
     id: `forge-${Date.now()}`,

@@ -26,7 +26,7 @@ export function Screen({
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor }]}>
         <ThemeBackdrop />
-        <View style={styles.fill}>{children}</View>
+        <View style={styles.screenFill}>{children}</View>
       </SafeAreaView>
     );
   }
@@ -100,7 +100,7 @@ export function ProgressBar({
     <View style={[styles.track, { backgroundColor: theme.tokens.surfaceElevated }]}>
       <View
         style={[
-          styles.fill,
+          styles.barFill,
           {
             width: `${clamped * 100}%`,
             backgroundColor: accent ?? theme.tokens.accent,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
   },
-  fill: {
+  screenFill: {
     flex: 1,
   },
   content: {
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  fill: {
+  barFill: {
     height: '100%',
     borderRadius: radius.pill,
   },

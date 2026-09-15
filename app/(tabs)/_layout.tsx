@@ -12,6 +12,12 @@ const NAV: Record<string, VQIconName> = {
   hero: 'trophy',
 };
 
+const NAV_THEME = {
+  mythicForge: { accent: '#E3B968', background: '#080A0C', muted: '#8F8A80' },
+  celestialPulse: { accent: '#BBD8FF', background: '#07101E', muted: '#8FA4BF' },
+  titanCore: { accent: '#74D8F6', background: '#040B0F', muted: '#8298A1' },
+} as const;
+
 function NavIcon({
   name,
   focused,
@@ -39,8 +45,8 @@ function NavIcon({
 }
 
 export default function TabLayout() {
-  const { theme } = useVitalTheme();
-  const t = theme.tokens;
+  const { themeId } = useVitalTheme();
+  const nav = NAV_THEME[themeId];
 
   return (
     <Tabs
@@ -49,8 +55,8 @@ export default function TabLayout() {
         tabBarStyle: [
           styles.tabBar,
           {
-            backgroundColor: `${t.navBackground}FA`,
-            borderTopColor: `${t.accent}44`,
+            backgroundColor: `${nav.background}FA`,
+            borderTopColor: `${nav.accent}44`,
           },
           Platform.OS === 'web'
             ? ({
@@ -59,8 +65,8 @@ export default function TabLayout() {
               } as any)
             : null,
         ],
-        tabBarActiveTintColor: t.accent,
-        tabBarInactiveTintColor: '#8B8B8B',
+        tabBarActiveTintColor: nav.accent,
+        tabBarInactiveTintColor: nav.muted,
         tabBarItemStyle: styles.item,
         tabBarLabelStyle: styles.label,
       }}
@@ -69,35 +75,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ focused }) => <NavIcon name="index" focused={focused} accent={t.accent} />,
+          tabBarIcon: ({ focused }) => <NavIcon name="index" focused={focused} accent={nav.accent} />,
         }}
       />
       <Tabs.Screen
         name="train"
         options={{
           title: 'Train',
-          tabBarIcon: ({ focused }) => <NavIcon name="train" focused={focused} accent={t.accent} />,
+          tabBarIcon: ({ focused }) => <NavIcon name="train" focused={focused} accent={nav.accent} />,
         }}
       />
       <Tabs.Screen
         name="quests"
         options={{
           title: 'Quests',
-          tabBarIcon: ({ focused }) => <NavIcon name="quests" focused={focused} accent={t.accent} />,
+          tabBarIcon: ({ focused }) => <NavIcon name="quests" focused={focused} accent={nav.accent} />,
         }}
       />
       <Tabs.Screen
         name="armory"
         options={{
           title: 'Armory',
-          tabBarIcon: ({ focused }) => <NavIcon name="armory" focused={focused} accent={t.accent} />,
+          tabBarIcon: ({ focused }) => <NavIcon name="armory" focused={focused} accent={nav.accent} />,
         }}
       />
       <Tabs.Screen
         name="hero"
         options={{
           title: 'Hero',
-          tabBarIcon: ({ focused }) => <NavIcon name="hero" focused={focused} accent={t.accent} />,
+          tabBarIcon: ({ focused }) => <NavIcon name="hero" focused={focused} accent={nav.accent} />,
         }}
       />
     </Tabs>

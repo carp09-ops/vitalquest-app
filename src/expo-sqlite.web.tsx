@@ -127,7 +127,8 @@ function createWebDb() {
       }
 
       if (normalized.includes('from attribute_events')) {
-        const attribute = params[0];
+        const literal = normalized.match(/attribute\s*=\s*['"]([^'"]+)['"]/i)?.[1];
+        const attribute = params[0] ?? literal;
         return {
           total: store.attribute_events.filter((row) => row.attribute === attribute).reduce((sum, row) => sum + Number(row.amount || 0), 0),
         } as T;

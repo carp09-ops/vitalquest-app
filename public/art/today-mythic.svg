@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#080A0D"/><stop offset=".48" stop-color="#17130F"/><stop offset="1" stop-color="#090B0F"/></linearGradient>
+  <radialGradient id="fire" cx="72%" cy="42%" r="42%"><stop stop-color="#F6C76A" stop-opacity=".66"/><stop offset=".22" stop-color="#D68B2A" stop-opacity=".28"/><stop offset=".64" stop-color="#9A3C1C" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ECE0BD"/><stop offset=".18" stop-color="#80633D"/><stop offset=".48" stop-color="#201B17"/><stop offset=".72" stop-color="#B88A45"/><stop offset="1" stop-color="#14110F"/></linearGradient>
+  <linearGradient id="cape" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5F2019"/><stop offset="1" stop-color="#180B0A"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="16"/></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#sky)"/><rect width="1200" height="900" fill="url(#fire)"/>
+<!-- distant mountains -->
+<path d="M0 370 L160 205 L285 330 L430 120 L550 292 L680 180 L825 320 L980 135 L1200 320 L1200 560 L0 560Z" fill="#10151B" opacity=".85"/>
+<path d="M0 455 L190 310 L330 390 L510 230 L665 405 L805 290 L975 410 L1110 285 L1200 350 L1200 610 L0 610Z" fill="#0B0E12"/>
+<!-- citadel -->
+<g transform="translate(770 170)" fill="#101015" stroke="#D6A04C" stroke-opacity=".24" stroke-width="3">
+  <path d="M0 315H360V520H0Z"/><path d="M35 315V155H100V315M128 315V95H202V315M230 315V178H290V315M306 315V130H346V315"/>
+  <path d="M112 95L165 30L218 95M292 178L320 125L350 178M22 155L68 105L112 155" fill="#14100B"/>
+  <path d="M150 520V390H210V520" fill="#050607"/>
+</g>
+<!-- forge windows -->
+<g fill="#F0A23A" opacity=".78" filter="url(#glow)"><rect x="835" y="390" width="28" height="70"/><rect x="945" y="340" width="26" height="82"/><rect x="1040" y="370" width="26" height="70"/></g>
+<g fill="#F6BE5D" opacity=".75"><rect x="840" y="390" width="17" height="62"/><rect x="950" y="344" width="16" height="70"/><rect x="1045" y="374" width="16" height="58"/></g>
+<!-- warrior cape silhouette -->
+<path d="M245 830 C190 710 205 545 300 455 C328 430 345 404 350 360 L515 360 C522 415 547 455 586 487 C665 553 704 688 680 830Z" fill="url(#cape)" opacity=".95"/>
+<!-- legs -->
+<path d="M347 655 L415 655 L401 875 L315 875Z" fill="#171310"/><path d="M459 655 L527 655 L564 875 L480 875Z" fill="#171310"/>
+<!-- torso armor -->
+<path d="M310 430 C320 355 358 300 434 286 C512 300 554 355 566 430 L538 640 C486 685 383 684 330 638Z" fill="url(#armor)" stroke="#D9B66F" stroke-opacity=".5" stroke-width="3"/>
+<path d="M435 308V635" stroke="#D6A04C" stroke-opacity=".65" stroke-width="6"/><path d="M338 438 C405 470 470 470 538 438M330 528 C402 556 482 556 546 528" fill="none" stroke="#C49349" stroke-opacity=".55" stroke-width="5"/>
+<!-- shoulder plates -->
+<path d="M300 382 C250 376 215 405 205 456 L302 479 L336 413Z" fill="url(#armor)" stroke="#D6A04C" stroke-opacity=".45" stroke-width="3"/><path d="M565 382 C615 376 650 405 660 456 L563 479 L530 413Z" fill="url(#armor)" stroke="#D6A04C" stroke-opacity=".45" stroke-width="3"/>
+<!-- arms -->
+<path d="M240 440 C215 495 216 560 240 622 L295 598 L296 472Z" fill="#3A3025" stroke="#B98846" stroke-width="3"/><path d="M625 440 C650 495 648 560 624 622 L570 598 L569 472Z" fill="#3A3025" stroke="#B98846" stroke-width="3"/>
+<!-- helmet -->
+<path d="M365 275 C370 214 395 174 435 162 C477 174 501 216 504 275 L480 345 L392 345Z" fill="url(#armor)" stroke="#D6A04C" stroke-opacity=".6" stroke-width="3"/>
+<path d="M386 240 L483 240 L474 287 L397 287Z" fill="#050607"/><path d="M432 168V302" stroke="#D6A04C" stroke-width="5"/>
+<path d="M435 135 L459 169 H411Z" fill="#D6A04C" opacity=".75"/>
+<!-- sword -->
+<path d="M675 805 L709 795 L550 350 L529 359Z" fill="#C6B47E"/><path d="M527 352 L553 340 L565 379 L540 389Z" fill="#E4C071"/><path d="M508 375 L576 350" stroke="#D6A04C" stroke-width="10"/>
+<!-- foreground embers -->
+<g fill="#F0A23A"><circle cx="145" cy="700" r="3"/><circle cx="185" cy="620" r="2"/><circle cx="735" cy="635" r="3"/><circle cx="820" cy="710" r="2"/><circle cx="950" cy="590" r="2"/></g>
+<rect y="720" width="1200" height="180" fill="url(#sky)" opacity=".48"/>
+</svg>

@@ -30,7 +30,11 @@ function createWebDb(){return{
     if(normalized.includes('from attribute_events')){const literal=normalized.match(/attribute\s*=\s*['"]([^'"]+)['"]/i)?.[1];const attribute=params[0]??literal;return{total:store.attribute_events.filter(row=>row.attribute===attribute).reduce((sum,row)=>sum+Number(row.amount||0),0)} as T}
     return null;
   },
-  async getAllAsync<T=any>(sql:string,...params:any[]):Promise<T[]>{const store=loadStore();const normalized=normalize(sql);if(normalized.includes('distinct substr(completed_at,1,10)')&&normalized.includes('from workout_sessions')){const days=Array.from(new Set(store.workout_sessions.map(row=>String(row.completed_at).slice(0,10)))).sort((a,b)=>b.localeCompare(a)).slice(0,90).map(day=>({day}));return days as T[]}return[];}
+  async getAllAsync<T=any>(sql:string,...params:any[]):Promise<T[]>{const store=loadStore();const normalized=normalize(sql);
+    if(normalized.includes('distinct substr(completed_at,1,10)')&&normalized.includes('from workout_sessions')){const days=Array.from(new Set(store.workout_sessions.map(row=>String(row.completed_at).slice(0,10)))).sort((a,b)=>b.localeCompare(a)).slice(0,90).map(day=>({day}));return days as T[]}
+    if(normalized.includes('from workout_sessions')&&normalized.includes('order by completed_at desc')&&normalized.includes('limit 12')){return [...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,12) as T[]}
+    return[];
+  }
 }}
 
 type WebDb=ReturnType<typeof createWebDb>;const DbContext=createContext<WebDb|null>(null);

@@ -1,32 +1,70 @@
 import { Tabs } from 'expo-router';
-import { colors } from '../../src/theme';
+import { Text } from 'react-native';
+import { useVitalTheme } from '../../src/ThemeProvider';
+
+const icon = (symbol: string, color: string) => (
+  <Text style={{ color, fontSize: 18, fontWeight: '800' }}>{symbol}</Text>
+);
 
 export default function TabLayout() {
+  const { theme } = useVitalTheme();
+  const t = theme.tokens;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0D1015',
-          borderTopColor: colors.border,
+          backgroundColor: t.navBackground,
+          borderTopColor: t.border,
           height: 82,
           paddingTop: 8,
           paddingBottom: 16,
         },
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: colors.muted,
+        tabBarActiveTintColor: t.accent,
+        tabBarInactiveTintColor: t.muted,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '800',
           letterSpacing: 0.3,
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Today' }} />
-      <Tabs.Screen name="train" options={{ title: 'Train' }} />
-      <Tabs.Screen name="hero" options={{ title: 'Hero' }} />
-      <Tabs.Screen name="quests" options={{ title: 'Quests' }} />
-      <Tabs.Screen name="armory" options={{ title: 'Armory' }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Today',
+          tabBarIcon: ({ color }) => icon('⌂', color),
+        }}
+      />
+      <Tabs.Screen
+        name="train"
+        options={{
+          title: 'Train',
+          tabBarIcon: ({ color }) => icon('↟', color),
+        }}
+      />
+      <Tabs.Screen
+        name="quests"
+        options={{
+          title: 'Quests',
+          tabBarIcon: ({ color }) => icon('◇', color),
+        }}
+      />
+      <Tabs.Screen
+        name="armory"
+        options={{
+          title: 'Armory',
+          tabBarIcon: ({ color }) => icon('⬡', color),
+        }}
+      />
+      <Tabs.Screen
+        name="hero"
+        options={{
+          title: 'Hero',
+          tabBarIcon: ({ color }) => icon('♜', color),
+        }}
+      />
     </Tabs>
   );
 }

@@ -14,15 +14,18 @@ const EMPTY: ProgressionSnapshot = {
   agilityXP: 0,
   workoutCount: 0,
   totalVolume: 0,
+  totalDistanceMiles: 0,
   prCount: 0,
   streakDays: 0,
   thisWeekWorkouts: 0,
   thisWeekVolume: 0,
+  thisWeekDistanceMiles: 0,
   thisWeekXP: 0,
   lastWorkoutAt: null,
   quests: {
     ironWeek: { progress: 0, target: 3, complete: false },
     fiveTonTrial: { progress: 0, target: 10000, complete: false },
+    longRoad: { progress: 0, target: 15, complete: false },
     veteranPath: { progress: 0, target: 25, complete: false },
   },
   unlocks: {
@@ -30,6 +33,7 @@ const EMPTY: ProgressionSnapshot = {
     relentless: false,
     forgedHelm: false,
     titanPlate: false,
+    roadRunnerGreaves: false,
   },
 };
 

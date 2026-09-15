@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+  <linearGradient id="space" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#06101D"/><stop offset=".48" stop-color="#0D1B2E"/><stop offset="1" stop-color="#07101A"/></linearGradient>
+  <radialGradient id="halo" cx="53%" cy="38%" r="44%"><stop stop-color="#B9F7FF" stop-opacity=".82"/><stop offset=".16" stop-color="#4FD9FF" stop-opacity=".38"/><stop offset=".5" stop-color="#3D5BFF" stop-opacity=".09"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#BDEBFF"/><stop offset=".16" stop-color="#2D668A"/><stop offset=".44" stop-color="#0A1728"/><stop offset=".7" stop-color="#3A84A2"/><stop offset="1" stop-color="#09111C"/></linearGradient>
+  <filter id="g"><feGaussianBlur stdDeviation="18"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#space)"/><rect width="1200" height="900" fill="url(#halo)"/>
+<!-- stars -->
+<g fill="#E9FCFF"><circle cx="110" cy="110" r="2"/><circle cx="196" cy="205" r="1.7"/><circle cx="315" cy="82" r="1.5"/><circle cx="430" cy="185" r="2"/><circle cx="760" cy="90" r="1.5"/><circle cx="845" cy="205" r="2"/><circle cx="1060" cy="130" r="1.5"/><circle cx="1110" cy="260" r="2"/></g>
+<!-- planets and orbit -->
+<circle cx="960" cy="220" r="116" fill="#132947" stroke="#5BD8FF" stroke-opacity=".25" stroke-width="3"/><circle cx="960" cy="220" r="83" fill="#0C1A2D"/><ellipse cx="960" cy="220" rx="190" ry="58" fill="none" stroke="#55E5FF" stroke-opacity=".28" stroke-width="4" transform="rotate(-14 960 220)"/>
+<circle cx="245" cy="245" r="58" fill="#122B43" stroke="#9CEBFF" stroke-opacity=".2" stroke-width="2"/>
+<!-- futuristic city -->
+<g fill="#0A1726" stroke="#47CBE8" stroke-opacity=".18" stroke-width="2"><path d="M0 570H120V430H155V570H250V365H310V570H385V465H440V570H525V320H600V570H690V390H748V570H825V455H875V570H965V350H1030V570H1200V900H0Z"/></g>
+<g fill="#53E4FF" opacity=".5" filter="url(#g)"><rect x="274" y="392" width="8" height="118"/><rect x="557" y="348" width="9" height="130"/><rect x="998" y="378" width="8" height="125"/></g>
+<!-- hero energy rings -->
+<circle cx="560" cy="360" r="182" fill="none" stroke="#67E7FF" stroke-opacity=".2" stroke-width="3"/><circle cx="560" cy="360" r="142" fill="none" stroke="#9CF2FF" stroke-opacity=".17" stroke-width="2"/><circle cx="560" cy="360" r="102" fill="none" stroke="#FFFFFF" stroke-opacity=".12" stroke-width="2"/>
+<!-- cloaked hero -->
+<path d="M365 842 C355 665 395 545 454 490 C484 462 505 430 510 385 H613 C620 430 640 460 670 490 C735 555 770 675 758 842Z" fill="#0B1524" stroke="#48DFFF" stroke-opacity=".22" stroke-width="3"/>
+<!-- legs -->
+<path d="M472 640H535L515 875H438Z" fill="#08111E"/><path d="M585 640H646L680 875H605Z" fill="#08111E"/>
+<!-- torso -->
+<path d="M456 438 C470 360 510 315 560 306 C615 315 655 365 666 438 L638 655 C585 690 526 690 480 654Z" fill="url(#suit)" stroke="#67E7FF" stroke-opacity=".46" stroke-width="3"/>
+<path d="M560 322V651" stroke="#59DAF5" stroke-opacity=".7" stroke-width="5"/>
+<path d="M485 468 C535 492 588 492 635 468M478 555 C530 579 594 579 642 555" fill="none" stroke="#5BE1F8" stroke-opacity=".42" stroke-width="4"/>
+<!-- shoulders -->
+<path d="M445 394 C400 397 375 430 372 474 L456 485 L487 420Z" fill="#14304B" stroke="#55DAF1" stroke-opacity=".45" stroke-width="3"/><path d="M675 394 C720 397 745 430 748 474 L664 485 L634 420Z" fill="#14304B" stroke="#55DAF1" stroke-opacity=".45" stroke-width="3"/>
+<!-- hood -->
+<path d="M505 307 C510 240 528 196 560 184 C592 196 614 242 616 307 L596 365 H522Z" fill="#091420" stroke="#6BE7FA" stroke-opacity=".42" stroke-width="3"/>
+<path d="M522 265 C545 247 575 247 597 265 L588 320 H530Z" fill="#02070C"/>
+<circle cx="548" cy="286" r="4" fill="#93F5FF"/><circle cx="572" cy="286" r="4" fill="#93F5FF"/>
+<!-- chest crystal -->
+<path d="M560 410 L589 452 L560 500 L531 452Z" fill="#A4F5FF" stroke="#E7FFFF" stroke-width="2"/><path d="M560 419 L576 452 L560 482 L544 452Z" fill="#2ECFEA"/>
+<circle cx="560" cy="452" r="56" fill="#4EE8FF" opacity=".13" filter="url(#g)"/>
+<!-- energy trails -->
+<path d="M390 570 C330 470 320 345 370 250" fill="none" stroke="#52DFFF" stroke-opacity=".28" stroke-width="5"/><path d="M735 590 C805 485 820 350 770 245" fill="none" stroke="#756CFF" stroke-opacity=".25" stroke-width="5"/>
+<rect y="740" width="1200" height="160" fill="#06101A" opacity=".52"/>
+</svg>

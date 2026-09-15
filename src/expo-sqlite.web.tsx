@@ -3,17 +3,19 @@ import React, { createContext, useContext, useEffect, useMemo } from 'react';
 type WebStore = {
   workout_sessions: any[];
   exercise_sets: any[];
+  endurance_sessions: any[];
   xp_events: any[];
   attribute_events: any[];
   sync_outbox: any[];
 };
 
-const STORAGE_KEY = 'vitalquest.webdb.v1';
+const STORAGE_KEY = 'vitalquest.webdb.v2';
 
 function emptyStore(): WebStore {
   return {
     workout_sessions: [],
     exercise_sets: [],
+    endurance_sessions: [],
     xp_events: [],
     attribute_events: [],
     sync_outbox: [],
@@ -23,7 +25,7 @@ function emptyStore(): WebStore {
 function loadStore(): WebStore {
   if (typeof window === 'undefined') return emptyStore();
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem('vitalquest.webdb.v1');
     return raw ? { ...emptyStore(), ...JSON.parse(raw) } : emptyStore();
   } catch {
     return emptyStore();
@@ -35,11 +37,13 @@ function persistStore(store: WebStore) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
+function normalize(sql: string) {
+  return sql.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
 function createWebDb() {
   return {
-    async execAsync() {
-      // Browser storage is schemaless. Native migrations remain authoritative for SQLite.
-    },
+    async execAsync() {},
 
     async withTransactionAsync(callback: () => Promise<void>) {
       await callback();
@@ -47,7 +51,7 @@ function createWebDb() {
 
     async runAsync(sql: string, ...params: any[]) {
       const store = loadStore();
-      const normalized = sql.replace(/\s+/g, ' ').trim().toLowerCase();
+      const normalized = normalize(sql);
 
       if (normalized.includes('insert into workout_sessions')) {
         store.workout_sessions.push({
@@ -58,6 +62,11 @@ function createWebDb() {
         store.exercise_sets.push({
           id: params[0], session_id: params[1], exercise_id: params[2], exercise_name: params[3],
           set_number: params[4], weight: params[5], reps: params[6], is_pr: params[7], completed_at: params[8],
+        });
+      } else if (normalized.includes('insert into endurance_sessions')) {
+        store.endurance_sessions.push({
+          id: params[0], session_id: params[1], distance_miles: params[2], duration_minutes: params[3],
+          avg_pace_seconds: params[4], activity_type: params[5], created_at: params[6],
         });
       } else if (normalized.includes('insert into xp_events')) {
         store.xp_events.push({ id: params[0], session_id: params[1], amount: params[2], reason: params[3], created_at: params[4] });
@@ -78,22 +87,68 @@ function createWebDb() {
 
     async getFirstAsync<T = any>(sql: string, ...params: any[]): Promise<T | null> {
       const store = loadStore();
-      const normalized = sql.replace(/\s+/g, ' ').trim().toLowerCase();
+      const normalized = normalize(sql);
+
+      if (normalized.includes('select completed_at from workout_sessions')) {
+        const row = [...store.workout_sessions].sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))[0];
+        return (row ? { completed_at: row.completed_at } : null) as T | null;
+      }
+
+      if (normalized.includes('count(*)') && normalized.includes('from workout_sessions')) {
+        let rows = store.workout_sessions;
+        if (normalized.includes('completed_at >= ?')) rows = rows.filter((row) => row.completed_at >= params[0]);
+        return { total: rows.length } as T;
+      }
+
+      if (normalized.includes('sum(total_volume)') && normalized.includes('from workout_sessions')) {
+        let rows = store.workout_sessions;
+        if (normalized.includes('completed_at >= ?')) rows = rows.filter((row) => row.completed_at >= params[0]);
+        return { total: rows.reduce((sum, row) => sum + Number(row.total_volume || 0), 0) } as T;
+      }
+
+      if (normalized.includes('sum(total_xp)') && normalized.includes('from workout_sessions')) {
+        let rows = store.workout_sessions;
+        if (normalized.includes('completed_at >= ?')) rows = rows.filter((row) => row.completed_at >= params[0]);
+        return { total: rows.reduce((sum, row) => sum + Number(row.total_xp || 0), 0) } as T;
+      }
+
+      if (normalized.includes('count(*)') && normalized.includes('from exercise_sets') && normalized.includes('is_pr=1')) {
+        return { total: store.exercise_sets.filter((row) => Number(row.is_pr) === 1).length } as T;
+      }
+
+      if (normalized.includes('sum(distance_miles)') && normalized.includes('from endurance_sessions')) {
+        let rows = store.endurance_sessions;
+        if (normalized.includes('created_at >= ?')) rows = rows.filter((row) => row.created_at >= params[0]);
+        return { total: rows.reduce((sum, row) => sum + Number(row.distance_miles || 0), 0) } as T;
+      }
 
       if (normalized.includes('from xp_events')) {
-        const total = store.xp_events.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-        return { total } as T;
+        return { total: store.xp_events.reduce((sum, row) => sum + Number(row.amount || 0), 0) } as T;
       }
 
       if (normalized.includes('from attribute_events')) {
         const attribute = params[0];
-        const total = store.attribute_events
-          .filter((row) => row.attribute === attribute)
-          .reduce((sum, row) => sum + Number(row.amount || 0), 0);
-        return { total } as T;
+        return {
+          total: store.attribute_events.filter((row) => row.attribute === attribute).reduce((sum, row) => sum + Number(row.amount || 0), 0),
+        } as T;
       }
 
       return null;
+    },
+
+    async getAllAsync<T = any>(sql: string, ...params: any[]): Promise<T[]> {
+      const store = loadStore();
+      const normalized = normalize(sql);
+
+      if (normalized.includes('distinct substr(completed_at,1,10)') && normalized.includes('from workout_sessions')) {
+        const days = Array.from(new Set(store.workout_sessions.map((row) => String(row.completed_at).slice(0, 10))))
+          .sort((a, b) => b.localeCompare(a))
+          .slice(0, 90)
+          .map((day) => ({ day }));
+        return days as T[];
+      }
+
+      return [];
     },
   };
 }
@@ -101,20 +156,9 @@ function createWebDb() {
 type WebDb = ReturnType<typeof createWebDb>;
 const DbContext = createContext<WebDb | null>(null);
 
-export function SQLiteProvider({
-  children,
-  onInit,
-}: {
-  children: React.ReactNode;
-  databaseName?: string;
-  onInit?: (db: any) => Promise<void> | void;
-}) {
+export function SQLiteProvider({ children, onInit }: { children: React.ReactNode; databaseName?: string; onInit?: (db: any) => Promise<void> | void }) {
   const db = useMemo(() => createWebDb(), []);
-
-  useEffect(() => {
-    void onInit?.(db);
-  }, [db, onInit]);
-
+  useEffect(() => { void onInit?.(db); }, [db, onInit]);
   return <DbContext.Provider value={db}>{children}</DbContext.Provider>;
 }
 

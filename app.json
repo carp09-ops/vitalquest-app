@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "VitalQuest",
+    "slug": "vitalquest-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "vitalquest",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vitalquestapp.mobile"
+    },
+    "android": {
+      "package": "com.vitalquestapp.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#090B0F"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

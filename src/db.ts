@@ -61,6 +61,12 @@ export async function migrateDb(db: SQLiteDatabase) {
   `);
 }
 
+type AttributeGain = {
+  attribute: 'strength' | 'stamina' | 'agility' | 'vitality' | 'discipline' | string;
+  amount: number;
+  reason: string;
+};
+
 export async function saveCompletedWorkout(
   db: SQLiteDatabase,
   input: {
@@ -72,7 +78,8 @@ export async function saveCompletedWorkout(
     durationMinutes: number;
     totalVolume: number;
     totalXP: number;
-    strengthXP: number;
+    strengthXP?: number;
+    attributeGains?: AttributeGain[];
     sets: Array<{
       id: string;
       exerciseId: string;
@@ -84,6 +91,12 @@ export async function saveCompletedWorkout(
     }>;
   }
 ) {
+  const attributeGains: AttributeGain[] = input.attributeGains?.length
+    ? input.attributeGains
+    : input.strengthXP
+      ? [{ attribute: 'strength', amount: input.strengthXP, reason: 'resistance_training' }]
+      : [];
+
   await db.withTransactionAsync(async () => {
     await db.runAsync(
       `INSERT INTO workout_sessions
@@ -126,20 +139,26 @@ export async function saveCompletedWorkout(
       input.completedAt
     );
 
-    await db.runAsync(
-      `INSERT INTO attribute_events (id, session_id, attribute, amount, reason, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      `${input.sessionId}-strength`,
-      input.sessionId,
-      'strength',
-      input.strengthXP,
-      'resistance_training',
-      input.completedAt
-    );
+    for (const gain of attributeGains) {
+      if (!gain.amount) continue;
+      await db.runAsync(
+        `INSERT INTO attribute_events (id, session_id, attribute, amount, reason, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        `${input.sessionId}-${gain.attribute}`,
+        input.sessionId,
+        gain.attribute,
+        gain.amount,
+        gain.reason,
+        input.completedAt
+      );
+    }
 
     const payload = JSON.stringify({
       sessionId: input.sessionId,
       completedAt: input.completedAt,
+      templateId: input.templateId,
+      totalXP: input.totalXP,
+      attributeGains,
     });
 
     await db.runAsync(
@@ -163,14 +182,9 @@ export async function getLifetimeXP(db: SQLiteDatabase) {
   return row?.total ?? 0;
 }
 
-export async function getLifetimeAttributeXP(
-  db: SQLiteDatabase,
-  attribute: string
-) {
+export async function getLifetimeAttributeXP(db: SQLiteDatabase, attribute: string) {
   const row = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) AS total
-     FROM attribute_events
-     WHERE attribute = ?`,
+    `SELECT COALESCE(SUM(amount), 0) AS total FROM attribute_events WHERE attribute = ?`,
     attribute
   );
   return row?.total ?? 0;

@@ -1,27 +1,21 @@
 import { Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useVitalTheme } from '../../src/ThemeProvider';
 
-function NavIcon({ symbol, color, focused }: { symbol: string; color: string; focused: boolean }) {
-  const { theme } = useVitalTheme();
+function NavIndicator({ color, focused }: { color: string; focused: boolean }) {
   return (
     <View
       style={[
         {
-          width: 34,
-          height: 30,
-          borderRadius: 15,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: 1,
-          borderColor: focused ? `${theme.tokens.accent}55` : 'transparent',
-          backgroundColor: focused ? `${theme.tokens.accent}10` : 'transparent',
+          width: focused ? 24 : 5,
+          height: 2,
+          borderRadius: 999,
+          backgroundColor: focused ? color : `${color}55`,
+          marginBottom: 3,
         },
-        focused ? ({ boxShadow: `0 0 18px ${theme.tokens.accent}20` } as any) : null,
+        focused ? ({ boxShadow: `0 0 12px ${color}66` } as any) : null,
       ]}
-    >
-      <Text style={{ color, fontSize: 17, fontWeight: '900' }}>{symbol}</Text>
-    </View>
+    />
   );
 }
 
@@ -35,27 +29,32 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: [
           {
-            backgroundColor: `${t.navBackground}F7`,
-            borderTopColor: `${t.border}D8`,
-            height: 84,
-            paddingTop: 7,
-            paddingBottom: 15,
+            backgroundColor: `${t.navBackground}FA`,
+            borderTopColor: `${t.accent}2A`,
+            borderTopWidth: 1,
+            height: 76,
+            paddingTop: 9,
+            paddingBottom: 13,
           },
           ({
             boxShadow:
               themeId === 'celestialPulse'
-                ? '0 -12px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035)'
-                : '0 -14px 34px rgba(0,0,0,.38)',
-            backdropFilter: 'blur(16px)',
+                ? `0 -10px 30px rgba(0,0,0,.34), inset 0 1px 0 ${t.secondary}12`
+                : '0 -12px 30px rgba(0,0,0,.42)',
+            backdropFilter: 'blur(18px)',
           } as any),
         ],
         tabBarActiveTintColor: t.accent,
         tabBarInactiveTintColor: t.muted,
+        tabBarItemStyle: {
+          paddingTop: 1,
+        },
         tabBarLabelStyle: {
-          fontSize: 9,
+          fontSize: 8,
           fontWeight: '900',
-          letterSpacing: 0.35,
-          marginTop: 1,
+          letterSpacing: 1.05,
+          textTransform: 'uppercase',
+          marginTop: 2,
         },
       }}
     >
@@ -63,35 +62,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color, focused }) => <NavIcon symbol="⌂" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NavIndicator color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="train"
         options={{
           title: 'Train',
-          tabBarIcon: ({ color, focused }) => <NavIcon symbol="↟" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NavIndicator color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="quests"
         options={{
           title: 'Quests',
-          tabBarIcon: ({ color, focused }) => <NavIcon symbol="◇" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NavIndicator color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="armory"
         options={{
           title: 'Armory',
-          tabBarIcon: ({ color, focused }) => <NavIcon symbol="⬡" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NavIndicator color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="hero"
         options={{
           title: 'Hero',
-          tabBarIcon: ({ color, focused }) => <NavIcon symbol="♜" color={color} focused={focused} />,
+          tabBarIcon: ({ color, focused }) => <NavIndicator color={color} focused={focused} />,
         }}
       />
     </Tabs>

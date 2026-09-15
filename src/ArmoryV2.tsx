@@ -1,10 +1,10 @@
 import React,{useState} from 'react';
 import { ImageBackground, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { armory } from './data';
-import { useVitalTheme } from './ThemeProvider';
-import { themes, ThemeId } from './theme';
 import { IconArt } from './IconArt';
+import { themes, ThemeId } from './theme';
 import { useProgressionSnapshot } from './useProgression';
+import { useVitalTheme } from './ThemeProvider';
 
 type Tab='Gear'|'Badges'|'Titles'|'Worlds';
 const tabs:Tab[]=['Gear','Badges','Titles','Worlds'];
@@ -25,18 +25,20 @@ function RewardGrid({tab,wide}:{tab:Exclude<Tab,'Worlds'>;wide:boolean}){
   const stateFor=(name:string)=>{
     if(name==='Iron Initiate') return snapshot.unlocks.ironInitiate?'unlocked':'locked';
     if(name==='The Relentless') return snapshot.unlocks.relentless?'unlocked':'locked';
+    if(name==='The Restored') return snapshot.unlocks.restored?'unlocked':snapshot.recoveryCount>0?'progress':'locked';
     if(name==='Forged Helm') return snapshot.unlocks.forgedHelm?'unlocked':snapshot.workoutCount>0?'progress':'locked';
     if(name==='Titan Plate') return snapshot.unlocks.titanPlate?'unlocked':snapshot.totalVolume>0?'progress':'locked';
-    if(name==='Roadrunner Greaves') return snapshot.agilityXP>0?'unlocked':'locked';
+    if(name==='Roadrunner Greaves') return snapshot.unlocks.roadrunnerGreaves?'unlocked':snapshot.lifetimeMiles>0?'progress':'locked';
     if(name==='Ember Aura') return snapshot.totalXP>=5000?'unlocked':snapshot.totalXP>0?'progress':'locked';
     return 'locked';
   };
   const requirementFor=(name:string)=>{
     if(name==='Iron Initiate') return `${Math.min(snapshot.workoutCount,1)} / 1 workout`;
     if(name==='The Relentless') return `${Math.min(snapshot.streakDays,7)} / 7 day streak`;
+    if(name==='The Restored') return `${Math.min(snapshot.recoveryCount,5)} / 5 recovery protocols`;
     if(name==='Forged Helm') return `${Math.min(snapshot.workoutCount,10)} / 10 workouts`;
     if(name==='Titan Plate') return `${Math.min(Math.round(snapshot.totalVolume),100000).toLocaleString()} / 100,000 lb`;
-    if(name==='Roadrunner Greaves') return 'Earn Agility XP through endurance training';
+    if(name==='Roadrunner Greaves') return `${Math.min(snapshot.lifetimeMiles,25).toFixed(1)} / 25.0 miles`;
     if(name==='Ember Aura') return `${Math.min(snapshot.totalXP,5000).toLocaleString()} / 5,000 XP`;
     return 'Requirement hidden';
   };

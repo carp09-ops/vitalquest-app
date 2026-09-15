@@ -18,28 +18,55 @@ function webStyle(style: Record<string, unknown>) {
 export function ThemeBackdrop() {
   const { themeId, theme } = useVitalTheme();
   const t = theme.tokens;
+  const art =
+    themeId === 'mythicForge'
+      ? '/vitalquest-app/art/mythic-forge.svg'
+      : themeId === 'celestialPulse'
+      ? '/vitalquest-app/art/celestial-pulse.svg'
+      : '/vitalquest-app/art/titan-core.svg';
 
   const gradient =
     themeId === 'mythicForge'
-      ? `radial-gradient(circle at 78% 8%, ${t.accent}26 0, transparent 28%), radial-gradient(circle at 12% 72%, ${t.secondary}18 0, transparent 30%), linear-gradient(155deg, #080A0C 0%, ${t.background} 46%, #111820 100%)`
+      ? `radial-gradient(circle at 78% 8%, ${t.accent}20 0, transparent 28%), linear-gradient(155deg, #080A0C 0%, ${t.background} 46%, #111820 100%)`
       : themeId === 'celestialPulse'
-      ? `radial-gradient(circle at 85% 4%, ${t.accent}32 0, transparent 17%), radial-gradient(circle at 68% 24%, ${t.secondary}24 0, transparent 30%), radial-gradient(circle at 10% 82%, #264B7428 0, transparent 30%), linear-gradient(150deg, #07101C 0%, ${t.background} 50%, #10233A 100%)`
-      : `radial-gradient(circle at 80% 0%, ${t.secondary}16 0, transparent 22%), radial-gradient(circle at 18% 72%, ${t.accent}24 0, transparent 32%), linear-gradient(150deg, #050506 0%, ${t.background} 54%, #17191D 100%)`;
+      ? `radial-gradient(circle at 85% 4%, ${t.accent}28 0, transparent 17%), radial-gradient(circle at 68% 24%, ${t.secondary}20 0, transparent 30%), linear-gradient(150deg, #07101C 0%, ${t.background} 50%, #10233A 100%)`
+      : `radial-gradient(circle at 18% 72%, ${t.accent}22 0, transparent 32%), linear-gradient(150deg, #050506 0%, ${t.background} 54%, #17191D 100%)`;
 
   const texture =
     themeId === 'mythicForge'
-      ? `repeating-linear-gradient(118deg, transparent 0 17px, rgba(255,255,255,.018) 18px 19px), radial-gradient(circle at 20% 10%, rgba(255,255,255,.025) 0 1px, transparent 1.6px)`
+      ? `repeating-linear-gradient(118deg, transparent 0 17px, rgba(255,255,255,.015) 18px 19px)`
       : themeId === 'celestialPulse'
-      ? `radial-gradient(circle at 10% 20%, rgba(255,255,255,.55) 0 1px, transparent 1.4px), radial-gradient(circle at 72% 60%, rgba(255,255,255,.22) 0 1px, transparent 1.5px), radial-gradient(circle at 42% 78%, rgba(255,255,255,.18) 0 1px, transparent 1.3px)`
-      : `repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 1px, transparent 1px 8px), repeating-linear-gradient(45deg, rgba(255,255,255,.012) 0 1px, transparent 1px 9px)`;
+      ? `radial-gradient(circle at 10% 20%, rgba(255,255,255,.35) 0 1px, transparent 1.4px), radial-gradient(circle at 72% 60%, rgba(255,255,255,.18) 0 1px, transparent 1.5px)`
+      : `repeating-linear-gradient(135deg, rgba(255,255,255,.02) 0 1px, transparent 1px 8px)`;
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: t.background }, webStyle({ backgroundImage: gradient })]} />
-      <View style={[StyleSheet.absoluteFill, styles.texture, webStyle({ backgroundImage: texture, backgroundSize: themeId === 'celestialPulse' ? '110px 110px, 180px 180px, 240px 240px' : undefined })]} />
-      {themeId === 'mythicForge' ? <ForgeLandscape /> : null}
-      {themeId === 'celestialPulse' ? <CelestialOrbit /> : null}
-      {themeId === 'titanCore' ? <TitanStripes /> : null}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: t.background },
+          webStyle({
+            backgroundImage: `url('${art}'), ${gradient}`,
+            backgroundSize: 'cover, cover',
+            backgroundPosition: 'center top, center',
+            backgroundRepeat: 'no-repeat, no-repeat',
+          }),
+        ]}
+      />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          styles.texture,
+          webStyle({
+            backgroundImage: texture,
+            backgroundSize: themeId === 'celestialPulse' ? '140px 140px, 220px 220px' : undefined,
+          }),
+        ]}
+      />
+      {Platform.OS !== 'web' && themeId === 'mythicForge' ? <ForgeLandscape /> : null}
+      {Platform.OS !== 'web' && themeId === 'celestialPulse' ? <CelestialOrbit /> : null}
+      {Platform.OS !== 'web' && themeId === 'titanCore' ? <TitanStripes /> : null}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: `${t.background}45` }]} />
     </View>
   );
 }
@@ -120,9 +147,7 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
       >
         Vital<Text style={{ color: theme.tokens.accent }}>Quest</Text>
       </Text>
-      {!compact ? (
-        <Text style={[styles.wordmarkTag, { color: theme.tokens.muted }]}>{theme.tagline}</Text>
-      ) : null}
+      {!compact ? <Text style={[styles.wordmarkTag, { color: theme.tokens.muted }]}>{theme.tagline}</Text> : null}
     </View>
   );
 }
@@ -271,7 +296,7 @@ export function ThemePill({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  texture: { opacity: 0.58 },
+  texture: { opacity: 0.5 },
   landscapeWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 210, overflow: 'hidden', opacity: 0.78 },
   mountain: { position: 'absolute', width: 0, height: 0, borderLeftWidth: 190, borderRightWidth: 190, borderBottomWidth: 155, borderLeftColor: 'transparent', borderRightColor: 'transparent', transform: [{ rotate: '180deg' }] },
   mountainOne: { left: -75, bottom: -44 },
@@ -282,7 +307,7 @@ const styles = StyleSheet.create({
   orbitLarge: { width: 380, height: 380, borderRadius: 190, right: 0, top: 0 },
   orbitSmall: { width: 260, height: 260, borderRadius: 130, right: 46, top: 62 },
   planet: { position: 'absolute', width: 88, height: 88, borderRadius: 44, borderWidth: 1, right: 48, top: 96, opacity: 0.82 },
-  titanWrap: { position: 'absolute', inset: 0 as any, overflow: 'hidden' },
+  titanWrap: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, overflow: 'hidden' },
   titanSlash: { position: 'absolute', width: 190, height: 900, right: -75, top: -130, transform: [{ rotate: '26deg' }] },
   titanSlashTwo: { right: 90, top: -280, width: 72 },
   markOuter: { borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

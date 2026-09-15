@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 2200" preserveAspectRatio="xMidYMin slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#07090C"/>
+      <stop offset="0.44" stop-color="#0B0F14"/>
+      <stop offset="1" stop-color="#121A22"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="78%" cy="8%" r="35%">
+      <stop offset="0" stop-color="#D6A04C" stop-opacity=".28"/>
+      <stop offset=".22" stop-color="#D6A04C" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#D6A04C" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mount" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#202B35" stop-opacity=".76"/>
+      <stop offset="1" stop-color="#0A0D11" stop-opacity=".98"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F3EBDD" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#F3EBDD" stop-opacity=".055"/>
+      <stop offset="1" stop-color="#F3EBDD" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="24"/></filter>
+  </defs>
+  <rect width="1440" height="2200" fill="url(#sky)"/>
+  <rect width="1440" height="2200" fill="url(#sun)"/>
+  <circle cx="1125" cy="160" r="84" fill="#D6A04C" opacity=".035"/>
+  <path d="M0 520 L160 320 L290 455 L455 185 L610 410 L770 245 L935 445 L1110 265 L1290 430 L1440 315 L1440 900 L0 900 Z" fill="url(#mount)" opacity=".52"/>
+  <path d="M0 725 L180 575 L300 650 L480 440 L660 665 L845 510 L1010 690 L1160 545 L1320 670 L1440 600 L1440 1000 L0 1000 Z" fill="#0B1015" opacity=".9"/>
+  <rect x="0" y="715" width="1440" height="90" fill="url(#mist)" filter="url(#blur)"/>
+  <g transform="translate(1045 305)" fill="#090C10" stroke="#D6A04C" stroke-opacity=".11" stroke-width="2">
+    <path d="M0 220 L32 220 L32 85 L64 85 L64 42 L88 42 L88 0 L108 42 L128 42 L128 95 L158 95 L158 55 L180 55 L180 18 L202 55 L225 55 L225 220 L260 220 L260 350 L0 350 Z"/>
+    <path d="M-55 350 L315 350 L270 395 L-20 395 Z"/>
+  </g>
+  <g opacity=".06" stroke="#D6A04C" fill="none">
+    <circle cx="245" cy="1140" r="160"/>
+    <circle cx="245" cy="1140" r="108"/>
+    <path d="M245 930 V1350 M35 1140 H455 M95 990 L395 1290 M395 990 L95 1290"/>
+  </g>
+  <path d="M0 1860 C260 1760 420 1840 650 1780 C900 1710 1110 1810 1440 1695 L1440 2200 L0 2200 Z" fill="#07090B" opacity=".95"/>
+  <path d="M0 1900 C260 1815 480 1890 720 1835 C990 1770 1180 1850 1440 1760" fill="none" stroke="#D6A04C" stroke-opacity=".12" stroke-width="2"/>
+</svg>

@@ -12,15 +12,18 @@ export type ProgressionSnapshot = {
   agilityXP: number;
   workoutCount: number;
   totalVolume: number;
+  totalDistanceMiles: number;
   prCount: number;
   streakDays: number;
   thisWeekWorkouts: number;
   thisWeekVolume: number;
+  thisWeekDistanceMiles: number;
   thisWeekXP: number;
   lastWorkoutAt: string | null;
   quests: {
     ironWeek: { progress: number; target: number; complete: boolean };
     fiveTonTrial: { progress: number; target: number; complete: boolean };
+    longRoad: { progress: number; target: number; complete: boolean };
     veteranPath: { progress: number; target: number; complete: boolean };
   };
   unlocks: {
@@ -28,6 +31,7 @@ export type ProgressionSnapshot = {
     relentless: boolean;
     forgedHelm: boolean;
     titanPlate: boolean;
+    roadRunnerGreaves: boolean;
   };
 };
 
@@ -55,9 +59,11 @@ export async function getProgressionSnapshot(db: SQLiteDatabase): Promise<Progre
     agilityXP,
     workoutCount,
     totalVolume,
+    totalDistanceMiles,
     prCount,
     thisWeekWorkouts,
     thisWeekVolume,
+    thisWeekDistanceMiles,
     thisWeekXP,
   ] = await Promise.all([
     getNumber(db, `SELECT COALESCE(SUM(amount),0) AS total FROM xp_events`),
@@ -66,9 +72,11 @@ export async function getProgressionSnapshot(db: SQLiteDatabase): Promise<Progre
     getNumber(db, `SELECT COALESCE(SUM(amount),0) AS total FROM attribute_events WHERE attribute='agility'`),
     getNumber(db, `SELECT COUNT(*) AS total FROM workout_sessions`),
     getNumber(db, `SELECT COALESCE(SUM(total_volume),0) AS total FROM workout_sessions`),
+    getNumber(db, `SELECT COALESCE(SUM(distance_miles),0) AS total FROM endurance_sessions`),
     getNumber(db, `SELECT COUNT(*) AS total FROM exercise_sets WHERE is_pr=1`),
     getNumber(db, `SELECT COUNT(*) AS total FROM workout_sessions WHERE completed_at >= ?`, weekStart),
     getNumber(db, `SELECT COALESCE(SUM(total_volume),0) AS total FROM workout_sessions WHERE completed_at >= ?`, weekStart),
+    getNumber(db, `SELECT COALESCE(SUM(distance_miles),0) AS total FROM endurance_sessions WHERE created_at >= ?`, weekStart),
     getNumber(db, `SELECT COALESCE(SUM(total_xp),0) AS total FROM workout_sessions WHERE completed_at >= ?`, weekStart),
   ]);
 
@@ -93,6 +101,7 @@ export async function getProgressionSnapshot(db: SQLiteDatabase): Promise<Progre
   const level = levelProgress(totalXP);
   const ironTarget = 3;
   const fiveTonTarget = 10000;
+  const longRoadTarget = 15;
   const veteranTarget = 25;
 
   return {
@@ -106,15 +115,18 @@ export async function getProgressionSnapshot(db: SQLiteDatabase): Promise<Progre
     agilityXP,
     workoutCount,
     totalVolume,
+    totalDistanceMiles,
     prCount,
     streakDays,
     thisWeekWorkouts,
     thisWeekVolume,
+    thisWeekDistanceMiles,
     thisWeekXP,
     lastWorkoutAt: last?.completed_at ?? null,
     quests: {
       ironWeek: { progress: Math.min(thisWeekWorkouts, ironTarget), target: ironTarget, complete: thisWeekWorkouts >= ironTarget },
       fiveTonTrial: { progress: Math.min(thisWeekVolume, fiveTonTarget), target: fiveTonTarget, complete: thisWeekVolume >= fiveTonTarget },
+      longRoad: { progress: Math.min(totalDistanceMiles, longRoadTarget), target: longRoadTarget, complete: totalDistanceMiles >= longRoadTarget },
       veteranPath: { progress: Math.min(workoutCount, veteranTarget), target: veteranTarget, complete: workoutCount >= veteranTarget },
     },
     unlocks: {
@@ -122,6 +134,7 @@ export async function getProgressionSnapshot(db: SQLiteDatabase): Promise<Progre
       relentless: streakDays >= 7,
       forgedHelm: workoutCount >= 10,
       titanPlate: totalVolume >= 100000,
+      roadRunnerGreaves: totalDistanceMiles >= 25,
     },
   };
 }

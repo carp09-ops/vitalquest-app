@@ -1,15 +1,17 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { migrateDb } from '../src/db';
-import { colors } from '../src/theme';
+import { VitalThemeProvider, useVitalTheme } from '../src/ThemeProvider';
 
-export default function RootLayout() {
+function ThemedStack() {
+  const { theme } = useVitalTheme();
+
   return (
     <SQLiteProvider databaseName="vitalquest.db" onInit={migrateDb}>
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
+          contentStyle: { backgroundColor: theme.tokens.background },
           animation: 'fade',
         }}
       >
@@ -17,5 +19,13 @@ export default function RootLayout() {
         <Stack.Screen name="workout" />
       </Stack>
     </SQLiteProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <VitalThemeProvider>
+      <ThemedStack />
+    </VitalThemeProvider>
   );
 }

@@ -23,14 +23,8 @@ export const templates: WorkoutTemplate[] = [
       { id: 'ohp', name: 'Overhead Press', muscle: 'Shoulders · Strength', previous: [{ weight: 115, reps: 8 }, { weight: 115, reps: 8 }, { weight: 115, reps: 7 }] },
     ],
   },
-  {
-    id: 'pull', name: 'Pull Day', subtitle: 'Back · Biceps · Rear Delts', icon: '🛡', estimatedMinutes: 55,
-    exercises: [{ id: 'row', name: 'Barbell Row', muscle: 'Back · Strength', previous: [{ weight: 185, reps: 8 }, { weight: 185, reps: 8 }, { weight: 185, reps: 8 }] }],
-  },
-  {
-    id: 'legs', name: 'Leg Day', subtitle: 'Quads · Hamstrings · Glutes', icon: '◆', estimatedMinutes: 60,
-    exercises: [{ id: 'squat', name: 'Back Squat', muscle: 'Legs · Strength', previous: [{ weight: 275, reps: 6 }, { weight: 275, reps: 6 }, { weight: 275, reps: 5 }] }],
-  },
+  { id: 'pull', name: 'Pull Day', subtitle: 'Back · Biceps · Rear Delts', icon: '🛡', estimatedMinutes: 55, exercises: [{ id: 'row', name: 'Barbell Row', muscle: 'Back · Strength', previous: [{ weight: 185, reps: 8 }, { weight: 185, reps: 8 }, { weight: 185, reps: 8 }] }] },
+  { id: 'legs', name: 'Leg Day', subtitle: 'Quads · Hamstrings · Glutes', icon: '◆', estimatedMinutes: 60, exercises: [{ id: 'squat', name: 'Back Squat', muscle: 'Legs · Strength', previous: [{ weight: 275, reps: 6 }, { weight: 275, reps: 6 }, { weight: 275, reps: 5 }] }] },
   { id: 'run', name: 'Endurance Run', subtitle: 'Stamina · Conditioning', icon: '➤', estimatedMinutes: 35, exercises: [] },
   { id: 'recovery', name: 'Recovery Protocol', subtitle: 'Mobility · Recovery · Reset', icon: '◌', estimatedMinutes: 20, exercises: [] },
 ];
@@ -44,6 +38,7 @@ export const quests = [
 export const armory = [
   { name: 'Iron Initiate', kind: 'Badge', state: 'unlocked', symbol: 'I' },
   { name: 'The Relentless', kind: 'Title', state: 'unlocked', symbol: 'R' },
+  { name: 'The Restored', kind: 'Title', state: 'locked', symbol: 'V' },
   { name: 'Forged Helm', kind: 'Head', state: 'progress', symbol: 'H' },
   { name: 'Titan Plate', kind: 'Chest', state: 'locked', symbol: 'T' },
   { name: 'Roadrunner Greaves', kind: 'Legs', state: 'locked', symbol: 'G' },

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice">
+<defs>
+  <linearGradient id="room" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#070708"/><stop offset=".5" stop-color="#15171A"/><stop offset="1" stop-color="#09090A"/></linearGradient>
+  <radialGradient id="red" cx="52%" cy="36%" r="48%"><stop stop-color="#FF3049" stop-opacity=".52"/><stop offset=".24" stop-color="#9F3E44" stop-opacity=".22"/><stop offset=".65" stop-color="#350A10" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#D4D5D2"/><stop offset=".16" stop-color="#7D7F82"/><stop offset=".43" stop-color="#26282C"/><stop offset=".72" stop-color="#5F6268"/><stop offset="1" stop-color="#141518"/></linearGradient>
+  <filter id="blur"><feGaussianBlur stdDeviation="20"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#room)"/><rect width="1200" height="900" fill="url(#red)"/>
+<!-- industrial ceiling -->
+<path d="M0 80H1200M0 160H1200M0 240H1200" stroke="#3A3C40" stroke-opacity=".32" stroke-width="5"/>
+<path d="M120 0L370 460M420 0L600 420M820 0L700 440M1080 0L835 455" stroke="#292B30" stroke-width="14"/>
+<g fill="#E04754" opacity=".72" filter="url(#blur)"><rect x="140" y="120" width="160" height="12"/><rect x="895" y="145" width="170" height="12"/></g>
+<g fill="#C43C49"><rect x="140" y="120" width="160" height="5"/><rect x="895" y="145" width="170" height="5"/></g>
+<!-- equipment silhouettes -->
+<g stroke="#4A4D54" stroke-width="12" fill="none" opacity=".72"><path d="M95 655V395H220V655M95 515H220"/><path d="M990 650V360H1100V650M990 500H1100"/><path d="M45 650H270M935 650H1155"/></g>
+<g fill="#202226"><rect x="72" y="630" width="220" height="45"/><rect x="917" y="630" width="250" height="45"/></g>
+<!-- athlete shadow -->
+<ellipse cx="595" cy="830" rx="230" ry="44" fill="#000" opacity=".55"/>
+<!-- legs -->
+<path d="M470 620L548 620L525 875H427Z" fill="#17181B"/><path d="M625 620L704 620L758 875H660Z" fill="#17181B"/>
+<!-- torso muscular armor/body -->
+<path d="M420 405 C437 318 492 270 580 264 C670 270 728 322 744 405 L706 646 C635 699 523 698 456 646Z" fill="url(#body)" stroke="#B4B5B2" stroke-opacity=".2" stroke-width="3"/>
+<!-- chest plates -->
+<path d="M463 396 C498 358 540 344 580 347 C620 344 664 359 699 396 L675 470 C610 489 550 490 486 470Z" fill="#303237" stroke="#8C8E91" stroke-opacity=".28" stroke-width="3"/>
+<path d="M580 350V635" stroke="#1A1B1E" stroke-width="8"/>
+<path d="M470 485 C535 512 630 512 694 485M463 558 C535 583 632 583 701 558" fill="none" stroke="#17181A" stroke-width="7"/>
+<!-- shoulders -->
+<path d="M421 365 C350 360 310 403 298 470 L411 491 L468 414Z" fill="#383A3F" stroke="#A2A3A1" stroke-opacity=".25" stroke-width="3"/><path d="M744 365 C815 360 855 403 867 470 L754 491 L698 414Z" fill="#383A3F" stroke="#A2A3A1" stroke-opacity=".25" stroke-width="3"/>
+<!-- arms -->
+<path d="M330 430 C300 506 308 604 360 670 L426 627 L405 477Z" fill="url(#body)"/><path d="M830 430 C862 506 852 604 802 670 L736 627 L756 477Z" fill="url(#body)"/>
+<!-- gloves -->
+<path d="M345 648 L398 624 L430 699 L372 729Z" fill="#5A151D" stroke="#BE4450" stroke-width="3"/><path d="M815 648 L762 624 L730 699 L788 729Z" fill="#5A151D" stroke="#BE4450" stroke-width="3"/>
+<!-- head -->
+<path d="M525 263 C530 205 548 164 581 154 C615 164 634 208 637 263 L616 332 H548Z" fill="#5A5B5F" stroke="#A0A1A0" stroke-opacity=".22" stroke-width="3"/>
+<path d="M542 235 C566 219 597 219 621 235 L614 285 H550Z" fill="#121316"/>
+<!-- red eye line -->
+<rect x="554" y="249" width="54" height="4" fill="#F03E4F"/><rect x="545" y="247" width="72" height="9" fill="#F03E4F" opacity=".2" filter="url(#blur)"/>
+<!-- power core -->
+<circle cx="580" cy="455" r="30" fill="#1D1E21" stroke="#E04350" stroke-width="5"/><circle cx="580" cy="455" r="13" fill="#E04350"/><circle cx="580" cy="455" r="60" fill="#E04350" opacity=".11" filter="url(#blur)"/>
+<!-- floor lines -->
+<path d="M0 720H1200M150 900L450 650M1050 900L750 650" stroke="#9F3E44" stroke-opacity=".22" stroke-width="4"/>
+<rect y="745" width="1200" height="155" fill="#09090A" opacity=".45"/>
+</svg>

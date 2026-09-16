@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { CustomWorkoutTemplate, DEFAULT_EQUIPMENT, EquipmentId } from './trainingPreferences';
 import { evaluateXPTrust, scaleTrustedAmount, VerificationEvidence } from './xpTrust';
+import { evaluateSessionIntegrity } from './sessionIntegrity';
 
 export async function migrateDb(db: SQLiteDatabase) {
   await db.execAsync(`
@@ -130,6 +131,7 @@ function defaultModality(templateId:string){
 }
 
 async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
+  const integrity=await evaluateSessionIntegrity(db,{startedAt:input.startedAt,completedAt:input.completedAt,durationMinutes:input.durationMinutes});
   const trust=evaluateXPTrust(input.totalXP,{
     source:'live_app',
     modality:defaultModality(input.templateId),
@@ -137,6 +139,8 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     totalVolume:input.totalVolume,
     liveTracked:true,
     ...input.verificationEvidence,
+    duplicateDetected:integrity.duplicateDetected||Boolean(input.verificationEvidence?.duplicateDetected),
+    clockMismatch:integrity.clockMismatch||Boolean(input.verificationEvidence?.clockMismatch),
   });
   const rawAttributeGains: AttributeGain[] = input.attributeGains?.length
     ? input.attributeGains
@@ -194,7 +198,7 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     trust.confidence,
     trust.multiplier,
     trust.tier,
-    JSON.stringify(trust.evidence),
+    JSON.stringify({...trust.evidence,integrity}),
     JSON.stringify(trust.reasons),
     input.completedAt
   );
@@ -210,6 +214,7 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     verificationConfidence: trust.confidence,
     verificationMultiplier: trust.multiplier,
     verificationEvidence: trust.evidence,
+    sessionIntegrity:integrity,
     durationMinutes: input.durationMinutes,
     totalVolume: input.totalVolume,
     attributeGains,

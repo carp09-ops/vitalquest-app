@@ -1,6 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { VQ_ICON_SPRITE } from './vqSprite';
+import { StyleSheet, Text, View } from 'react-native';
+import { useVitalTheme } from './ThemeProvider';
 
 export type VQIconName =
   | 'strength'
@@ -12,46 +12,43 @@ export type VQIconName =
   | 'trophy'
   | 'streak';
 
-const INDEX: Record<VQIconName, number> = {
-  strength: 0,
-  stamina: 1,
-  agility: 2,
-  xp: 3,
-  quest: 4,
-  armory: 5,
-  trophy: 6,
-  streak: 7,
+const GLYPH: Record<VQIconName, string> = {
+  strength: 'S',
+  stamina: 'E',
+  agility: 'A',
+  xp: 'XP',
+  quest: 'Q',
+  armory: 'AR',
+  trophy: 'H',
+  streak: 'D',
 };
 
-export function IconArt({
-  name,
-  size = 40,
-  opacity = 1,
-}: {
-  name: VQIconName;
-  size?: number;
-  opacity?: number;
-}) {
-  const index = INDEX[name];
+export function IconArt({ name, size = 40, opacity = 1 }: { name: VQIconName; size?: number; opacity?: number }) {
+  const { theme } = useVitalTheme();
+  const t = theme.tokens;
+  const fontSize = name === 'xp' || name === 'armory' ? size * .24 : size * .31;
   return (
-    <View style={[styles.crop, { width: size, height: size, borderRadius: size / 2, opacity }]}>
-      <Image
-        source={{ uri: VQ_ICON_SPRITE }}
-        resizeMode="stretch"
-        style={{
-          position: 'absolute',
-          left: -index * size,
-          top: 0,
-          width: size * 8,
+    <View
+      style={[
+        styles.shell,
+        {
+          width: size,
           height: size,
-        }}
-      />
+          borderRadius: Math.max(9, size * .28),
+          borderColor: `${t.text}1F`,
+          backgroundColor: t.surfaceElevated,
+          opacity,
+        },
+      ]}
+    >
+      <View style={[styles.mark, { backgroundColor: t.accent }]} />
+      <Text style={[styles.glyph, { color: t.text, fontSize }]}>{GLYPH[name]}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  crop: {
-    overflow: 'hidden',
-  },
+  shell: { borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' },
+  mark: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: .9 },
+  glyph: { fontWeight: '900', letterSpacing: .2 },
 });

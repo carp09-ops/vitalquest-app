@@ -4,6 +4,7 @@ import type { HeroArchetype } from './heroEvolution';
 import { evaluateXPTrust, scaleTrustedAmount, VerificationEvidence } from './xpTrust';
 import { evaluateSessionIntegrity } from './sessionIntegrity';
 import { collectHealthVerificationEvidence, mergeVerificationEvidence } from './sensorVerification';
+import { isLegOrFullBodyResistance } from './trainingIdentity';
 
 export async function migrateDb(db: SQLiteDatabase) {
   await db.execAsync(`
@@ -116,16 +117,17 @@ export async function migrateDb(db: SQLiteDatabase) {
   `);
 }
 
-type AttributeGain = {attribute:'strength'|'stamina'|'agility'|'vitality'|'discipline'|string;amount:number;reason:string;};
-type BaseSession = {sessionId:string;templateId:string;name:string;startedAt:string;completedAt:string;durationMinutes:number;totalVolume:number;totalXP:number;strengthXP?:number;attributeGains?:AttributeGain[];syncDetails?:Record<string,unknown>;verificationEvidence?:VerificationEvidence;};
+export type BankedAttributeGain={attribute:'strength'|'stamina'|'agility'|'vitality'|'discipline'|string;amount:number;reason:string;};
+type BaseSession={sessionId:string;templateId:string;name:string;startedAt:string;completedAt:string;durationMinutes:number;totalVolume:number;totalXP:number;strengthXP?:number;attributeGains?:BankedAttributeGain[];syncDetails?:Record<string,unknown>;verificationEvidence?:VerificationEvidence;exerciseIds?:string[];};
+type SessionSaveResult=ReturnType<typeof evaluateXPTrust>&{attributeGains:BankedAttributeGain[]};
 
 function defaultModality(templateId:string){if(templateId==='run')return'endurance'as const;if(templateId==='recovery')return'recovery'as const;return'resistance'as const;}
 
-function withResistanceSupportGains(input:BaseSession,gains:AttributeGain[]){
+function withResistanceSupportGains(input:BaseSession,gains:BankedAttributeGain[]){
   if(defaultModality(input.templateId)!=='resistance')return gains;
   const next=[...gains];
   const completedUnits=Math.max(1,Number(input.verificationEvidence?.completedUnits||0));
-  const lowerBody=input.templateId==='legs'||input.templateId.includes('lower')||input.templateId.includes('full');
+  const lowerBody=isLegOrFullBodyResistance(input.templateId,input.exerciseIds??[]);
   const hasDiscipline=next.some(gain=>gain.attribute==='discipline');
   const hasStamina=next.some(gain=>gain.attribute==='stamina');
   const strength=next.find(gain=>gain.attribute==='strength')?.amount??0;
@@ -140,14 +142,14 @@ function withResistanceSupportGains(input:BaseSession,gains:AttributeGain[]){
   return next;
 }
 
-async function writeSessionBase(db:SQLiteDatabase,input:BaseSession){
+async function writeSessionBase(db:SQLiteDatabase,input:BaseSession):Promise<SessionSaveResult>{
   const modality=defaultModality(input.templateId);
   const integrity=await evaluateSessionIntegrity(db,{startedAt:input.startedAt,completedAt:input.completedAt,durationMinutes:input.durationMinutes});
   const healthEvidence=await collectHealthVerificationEvidence({startedAt:input.startedAt,completedAt:input.completedAt,modality});
   const baseEvidence:VerificationEvidence={source:'live_app',modality,durationMinutes:input.durationMinutes,totalVolume:input.totalVolume,liveTracked:true,...input.verificationEvidence};
   const evidence=mergeVerificationEvidence(baseEvidence,healthEvidence);
   const trust=evaluateXPTrust(input.totalXP,{...evidence,duplicateDetected:integrity.duplicateDetected||Boolean(evidence.duplicateDetected),clockMismatch:integrity.clockMismatch||Boolean(evidence.clockMismatch)});
-  const baseAttributeGains:AttributeGain[]=input.attributeGains?.length?input.attributeGains:input.strengthXP?[{attribute:'strength',amount:input.strengthXP,reason:'resistance_training'}]:[];
+  const baseAttributeGains:BankedAttributeGain[]=input.attributeGains?.length?input.attributeGains:input.strengthXP?[{attribute:'strength',amount:input.strengthXP,reason:'resistance_training'}]:[];
   const rawAttributeGains=withResistanceSupportGains(input,baseAttributeGains);
   const attributeGains=rawAttributeGains.map(gain=>({...gain,amount:scaleTrustedAmount(gain.amount,trust.multiplier)}));
   await db.runAsync(`INSERT INTO workout_sessions (id, template_id, name, started_at, completed_at, duration_minutes, total_volume, total_xp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,input.sessionId,input.templateId,input.name,input.startedAt,input.completedAt,input.durationMinutes,input.totalVolume,trust.awardedXP);
@@ -156,12 +158,12 @@ async function writeSessionBase(db:SQLiteDatabase,input:BaseSession){
   await db.runAsync(`INSERT INTO session_verification (session_id, raw_xp, awarded_xp, withheld_xp, confidence, multiplier, tier, evidence_json, reasons_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,input.sessionId,trust.rawXP,trust.awardedXP,trust.withheldXP,trust.confidence,trust.multiplier,trust.tier,JSON.stringify({...trust.evidence,integrity}),JSON.stringify(trust.reasons),input.completedAt);
   const payload=JSON.stringify({sessionId:input.sessionId,completedAt:input.completedAt,templateId:input.templateId,rawXP:trust.rawXP,awardedXP:trust.awardedXP,withheldXP:trust.withheldXP,verificationTier:trust.tier,verificationConfidence:trust.confidence,verificationMultiplier:trust.multiplier,verificationEvidence:trust.evidence,sessionIntegrity:integrity,durationMinutes:input.durationMinutes,totalVolume:input.totalVolume,attributeGains,rawAttributeGains,...input.syncDetails});
   await db.runAsync(`INSERT INTO sync_outbox (id, entity_type, entity_id, operation, payload_json, status, retry_count, created_at) VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)`,`${input.sessionId}-sync`,'workout_session',input.sessionId,'upsert',payload,input.completedAt);
-  return trust;
+  return {...trust,attributeGains};
 }
 
-export async function saveCompletedWorkout(db:SQLiteDatabase,input:BaseSession&{sets:Array<{id:string;exerciseId:string;exerciseName:string;setNumber:number;weight:number;reps:number;isPR:boolean;completedAt?:string;}>;}){let trust:ReturnType<typeof evaluateXPTrust>|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,verificationEvidence:{completedUnits:input.sets.length,totalVolume:input.totalVolume,...input.verificationEvidence},syncDetails:{...input.syncDetails,sets:input.sets}});for(const set of input.sets){await db.runAsync(`INSERT INTO exercise_sets (id, session_id, exercise_id, exercise_name, set_number, weight, reps, is_pr, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,set.id,input.sessionId,set.exerciseId,set.exerciseName,set.setNumber,set.weight,set.reps,set.isPR?1:0,set.completedAt??input.completedAt);}});return trust!;}
+export async function saveCompletedWorkout(db:SQLiteDatabase,input:BaseSession&{sets:Array<{id:string;exerciseId:string;exerciseName:string;setNumber:number;weight:number;reps:number;isPR:boolean;completedAt?:string;}>;}):Promise<SessionSaveResult>{let trust:SessionSaveResult|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,exerciseIds:input.sets.map(set=>set.exerciseId),verificationEvidence:{completedUnits:input.sets.length,totalVolume:input.totalVolume,...input.verificationEvidence},syncDetails:{...input.syncDetails,sets:input.sets}});for(const set of input.sets){await db.runAsync(`INSERT INTO exercise_sets (id, session_id, exercise_id, exercise_name, set_number, weight, reps, is_pr, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,set.id,input.sessionId,set.exerciseId,set.exerciseName,set.setNumber,set.weight,set.reps,set.isPR?1:0,set.completedAt??input.completedAt);}});return trust!;}
 
-export async function saveCompletedEnduranceSession(db:SQLiteDatabase,input:BaseSession&{distanceMiles:number;avgPaceSeconds:number;activityType?:'run'|'walk'|'bike'|string;}){let trust:ReturnType<typeof evaluateXPTrust>|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,verificationEvidence:{modality:'endurance',completedUnits:1,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,...input.verificationEvidence},syncDetails:{...input.syncDetails,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,activityType:input.activityType??'run'}});await db.runAsync(`INSERT INTO endurance_sessions (id, session_id, distance_miles, duration_minutes, avg_pace_seconds, activity_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,`${input.sessionId}-endurance`,input.sessionId,input.distanceMiles,input.durationMinutes,input.avgPaceSeconds,input.activityType??'run',input.completedAt);});return trust!;}
+export async function saveCompletedEnduranceSession(db:SQLiteDatabase,input:BaseSession&{distanceMiles:number;avgPaceSeconds:number;activityType?:'run'|'walk'|'bike'|string;}):Promise<SessionSaveResult>{let trust:SessionSaveResult|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,verificationEvidence:{modality:'endurance',completedUnits:1,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,...input.verificationEvidence},syncDetails:{...input.syncDetails,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,activityType:input.activityType??'run'}});await db.runAsync(`INSERT INTO endurance_sessions (id, session_id, distance_miles, duration_minutes, avg_pace_seconds, activity_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,`${input.sessionId}-endurance`,input.sessionId,input.distanceMiles,input.durationMinutes,input.avgPaceSeconds,input.activityType??'run',input.completedAt);});return trust!;}
 
 export async function saveBetaFeedback(db:SQLiteDatabase,input:{id:string;sessionId?:string|null;kind:'session'|'issue';fairCredit?:boolean|null;explanationClear?:boolean|null;notes?:string;context?:Record<string,unknown>;createdAt?:string;}){
   const createdAt=input.createdAt??new Date().toISOString();

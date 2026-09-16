@@ -46,8 +46,20 @@ export async function captureLatestCoachingOutcome(db:SQLiteDatabase){
   clearRememberedRecommendation();return result;
 }
 
+async function normalizedOutcomeRows(db:SQLiteDatabase){
+  const rows=await db.getAllAsync<{session_id:string;recommended_template_id:string;actual_template_id:string;followed:number;outcome_score:number;outcome_label:string}>(`SELECT session_id,recommended_template_id,actual_template_id,followed,outcome_score,outcome_label FROM coaching_outcomes ORDER BY created_at DESC LIMIT 30`);
+  return Promise.all(rows.map(async row=>{
+    if(row.actual_template_id==='run'||row.actual_template_id==='recovery'||['push','pull','legs'].includes(row.actual_template_id))return row;
+    const exerciseRows=await db.getAllAsync<{exercise_id:string}>(`SELECT DISTINCT exercise_id FROM exercise_sets WHERE session_id=?`,row.session_id);
+    const followed=recommendationMatchesSession(row.recommended_template_id,row.actual_template_id,exerciseRows.map(item=>item.exercise_id));
+    const normalized=followed?1:0;
+    if(normalized!==row.followed)await db.runAsync(`UPDATE coaching_outcomes SET followed=? WHERE session_id=?`,normalized,row.session_id);
+    return{...row,followed:normalized};
+  }));
+}
+
 export async function getCoachingCalibration(db:SQLiteDatabase):Promise<CoachingCalibration>{
-  await ensureTable(db);const rows=await db.getAllAsync<{recommended_template_id:string;actual_template_id:string;followed:number;outcome_score:number;outcome_label:string}>(`SELECT recommended_template_id,actual_template_id,followed,outcome_score,outcome_label FROM coaching_outcomes ORDER BY created_at DESC LIMIT 30`);const observations=rows.length;
+  await ensureTable(db);const rows=await normalizedOutcomeRows(db);const observations=rows.length;
   if(!observations)return{observations:0,followed:0,followRate:0,validated:0,calibrationScore:0,label:'LEARNING',pattern:'VitalQuest needs completed recommendation cycles before it can personalize coaching.'};
   const followed=rows.filter(row=>row.followed===1).length;const validated=rows.filter(row=>row.outcome_label==='VALIDATED').length;const calibrationScore=Math.round(rows.reduce((sum,row)=>sum+Number(row.outcome_score||0),0)/observations);const followRate=Math.round((followed/observations)*100);const label=observations>=8&&calibrationScore>=75?'PERSONALIZED':observations>=3?'CALIBRATING':'LEARNING';
   const skips=new Map<string,number>();for(const row of rows){if(row.followed===0)skips.set(row.recommended_template_id,(skips.get(row.recommended_template_id)??0)+1)}const topSkip=[...skips.entries()].sort((a,b)=>b[1]-a[1])[0];

@@ -1,0 +1,1 @@
+Binary production art is stored under `public/art/v1/` and branding under `public/assets/branding/`. Screen code should reference `src/artAssets.ts` only. Legacy SVG/interim art remains in `public/art/` until each screen is migrated and visually QA'd.

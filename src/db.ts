@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { CustomWorkoutTemplate, DEFAULT_EQUIPMENT, EquipmentId } from './trainingPreferences';
+import type { HeroArchetype } from './heroEvolution';
 import { evaluateXPTrust, scaleTrustedAmount, VerificationEvidence } from './xpTrust';
 import { evaluateSessionIntegrity } from './sessionIntegrity';
 import { collectHealthVerificationEvidence, mergeVerificationEvidence } from './sensorVerification';
@@ -153,6 +154,8 @@ export async function saveBetaFeedback(db:SQLiteDatabase,input:{id:string;sessio
 
 export async function getEquipmentProfile(db:SQLiteDatabase):Promise<EquipmentId[]>{const row=await db.getFirstAsync<{value_json:string}>(`SELECT value_json FROM app_preferences WHERE key='equipment_profile' LIMIT 1`);if(!row?.value_json)return DEFAULT_EQUIPMENT;try{const parsed=JSON.parse(row.value_json);return Array.isArray(parsed)&&parsed.length?parsed:DEFAULT_EQUIPMENT;}catch{return DEFAULT_EQUIPMENT;}}
 export async function saveEquipmentProfile(db:SQLiteDatabase,equipment:EquipmentId[]){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO app_preferences (key, value_json, updated_at) VALUES (?, ?, ?)`, 'equipment_profile',JSON.stringify(equipment),now);}
+export async function getHeroArchetype(db:SQLiteDatabase):Promise<HeroArchetype>{const row=await db.getFirstAsync<{value_json:string}>(`SELECT value_json FROM app_preferences WHERE key='hero_archetype' LIMIT 1`);if(!row?.value_json)return 'athlete';try{const parsed=JSON.parse(row.value_json);return parsed==='mystic'||parsed==='athlete'||parsed==='spartan'?parsed:'athlete';}catch{return 'athlete';}}
+export async function saveHeroArchetype(db:SQLiteDatabase,archetype:HeroArchetype){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO app_preferences (key, value_json, updated_at) VALUES (?, ?, ?)`, 'hero_archetype',JSON.stringify(archetype),now);}
 export async function getCustomWorkouts(db:SQLiteDatabase):Promise<CustomWorkoutTemplate[]>{const rows=await db.getAllAsync<{id:string;name:string;exercises_json:string;created_at:string}>(`SELECT id, name, exercises_json, created_at FROM custom_workouts ORDER BY updated_at DESC`);return rows.map(row=>({id:row.id,name:row.name,createdAt:row.created_at,exercises:JSON.parse(row.exercises_json||'[]')}));}
 export async function saveCustomWorkout(db:SQLiteDatabase,workout:CustomWorkoutTemplate){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO custom_workouts (id, name, exercises_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,workout.id,workout.name,JSON.stringify(workout.exercises),workout.createdAt||now,now);}
 export async function deleteCustomWorkout(db:SQLiteDatabase,id:string){await db.runAsync(`DELETE FROM custom_workouts WHERE id = ?`,id);}

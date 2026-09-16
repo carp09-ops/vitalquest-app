@@ -11,7 +11,7 @@ export default function EquipmentProfileV2(){
   const [selected,setSelected]=useState<EquipmentId[]>([]);const [loaded,setLoaded]=useState(false);const [saved,setSaved]=useState(false);
   useEffect(()=>{getEquipmentProfile(db).then(value=>{setSelected(value);setLoaded(true)})},[db]);
   const toggle=(id:EquipmentId)=>{setSaved(false);setSelected(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id])};
-  async function save(){const next=selected.length?selected:['bodyweight'];await saveEquipmentProfile(db,next);setSelected(next);setSaved(true)}
+  async function save(){const next:EquipmentId[]=selected.length?selected:['bodyweight'];await saveEquipmentProfile(db,next);setSelected(next);setSaved(true)}
   return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><ScrollView contentContainerStyle={styles.page}><View style={styles.shell}>
     <Pressable onPress={()=>router.back()}><Text style={[styles.back,{color:t.muted}]}>‹ TRAIN</Text></Pressable>
     <View><Text style={[styles.eyebrow,{color:t.accent}]}>TRAINING ENVIRONMENT</Text><Text style={[styles.title,{color:t.text}]}>What can you actually use?</Text><Text style={[styles.copy,{color:t.muted}]}>VitalQuest will exclude exercises that require equipment you do not have. Change this whenever your training environment changes.</Text></View>

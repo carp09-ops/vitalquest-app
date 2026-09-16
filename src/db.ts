@@ -242,6 +242,7 @@ export async function saveCompletedWorkout(
       weight: number;
       reps: number;
       isPR: boolean;
+      completedAt?: string;
     }>;
   }
 ) {
@@ -269,7 +270,7 @@ export async function saveCompletedWorkout(
         set.weight,
         set.reps,
         set.isPR ? 1 : 0,
-        input.completedAt
+        set.completedAt ?? input.completedAt
       );
     }
   });

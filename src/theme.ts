@@ -29,12 +29,11 @@ export type VitalTheme = {
   };
 };
 
-// One product shell. These legacy IDs remain only for backward compatibility
-// while archetypes own character-specific color and art direction.
+// One product shell. Archetype worlds now live behind translucent premium materials.
 const shell = {
-  background: shellPalette.obsidian,
-  surface: shellPalette.graphite,
-  surfaceElevated: shellPalette.slate,
+  background: 'rgba(8,10,13,.76)',
+  surface: 'rgba(17,21,26,.84)',
+  surfaceElevated: 'rgba(32,38,45,.82)',
   border: shellPalette.border,
   text: shellPalette.ivory,
   muted: shellPalette.steelLight,
@@ -48,8 +47,8 @@ const shell = {
   agility: '#65AEE6',
   power: '#A58BD2',
   discipline: '#D6B65C',
-  navBackground: 'rgba(8,10,13,.94)',
-  heroSurface: '#171C22',
+  navBackground: 'rgba(8,10,13,.82)',
+  heroSurface: 'rgba(23,28,34,.76)',
 } as const;
 
 export const themes: Record<ThemeId, VitalTheme> = {

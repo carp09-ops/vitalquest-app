@@ -19,6 +19,9 @@ export type GeneratedWorkoutPlan = {
   projectedXP: number;
   estimatedMinutes: number;
   rationale: string;
+  coachingNote: string;
+  qualityScore: number;
+  qualityLabel: 'CALIBRATING' | 'SOLID' | 'STRONG' | 'ELITE FIT';
   exercises: GeneratedExercise[];
 };
 
@@ -72,6 +75,22 @@ function projectedSessionXP(sets: number, minutes: number, streakDays: number) {
   return 100 + sets * 6 + Math.min(60, Math.floor(minutes * 1.25)) + Math.min(50, streakDays * 5);
 }
 
+function qualityLabel(score:number):GeneratedWorkoutPlan['qualityLabel'] {
+  if(score>=90)return 'ELITE FIT';
+  if(score>=80)return 'STRONG';
+  if(score>=68)return 'SOLID';
+  return 'CALIBRATING';
+}
+
+function scorePlan(args:{targetXP:number;projectedXP:number;exercises:GeneratedExercise[];snapshot:ProgressionSnapshot;intelligence?:TrainingIntelligence}) {
+  const xpFit = Math.max(0, 40 - Math.round(Math.abs(args.targetXP-args.projectedXP)/4));
+  const historyDepth = Math.min(20, (args.intelligence?.recent.length ?? 0) * 2);
+  const exerciseHistory = args.exercises.filter(ex => args.intelligence?.exerciseInsights.some(i=>i.exerciseId===ex.id)).length;
+  const familiarity = Math.min(20, exerciseHistory * 4);
+  const recoveryFit = args.snapshot.thisWeekResistanceWorkouts >= 4 && args.snapshot.thisWeekRecoverySessions === 0 ? 5 : 15;
+  return Math.min(100, xpFit + historyDepth + familiarity + recoveryFit);
+}
+
 export function generateWorkoutPlan(args: {
   targetXP: number;
   focus: ForgeFocus;
@@ -94,7 +113,9 @@ export function generateWorkoutPlan(args: {
     const sets = Math.max(2, Math.min(5, Math.round(remaining / slots)));
     remaining -= sets;
     const compound = ['bench','row','ohp','squat','rdl','leg-press'].includes(exercise.id);
-    return { ...exercise, sets, reps: compound ? (targetXP >= 300 ? 6 : 8) : 10 };
+    const trend = args.intelligence?.exerciseInsights.find(item=>item.exerciseId===exercise.id)?.volumeTrendPct ?? 0;
+    const reps = compound ? (trend < -8 ? 8 : targetXP >= 300 ? 6 : 8) : 10;
+    return { ...exercise, sets, reps };
   });
   const totalSets = exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
   const projectedXP = projectedSessionXP(totalSets, estimatedMinutes, args.snapshot.streakDays);
@@ -105,6 +126,18 @@ export function generateWorkoutPlan(args: {
     ? `VitalQuest used your progression balance, recent resistance mix, ${args.snapshot.thisWeekResistanceWorkouts} resistance sessions this week, and ${args.snapshot.streakDays}-day streak to choose a ${resolvedFocus}-body emphasis near ${targetXP} XP.${historyText}`
     : `You selected ${resolvedFocus}-body training. VitalQuest scaled exercise count, working sets and estimated duration toward a ${targetXP} XP target.${historyText}`;
 
+  const strongest = args.intelligence?.strongestTrend;
+  const needsAttention = args.intelligence?.needsAttention;
+  const coachingNote = strongest && strongest.volumeTrendPct > 4
+    ? `${strongest.name} volume is trending +${strongest.volumeTrendPct}% across recent logged sets. The Forge can keep progressive overload in play while preserving total-session balance.`
+    : needsAttention && needsAttention.volumeTrendPct < -6
+      ? `${needsAttention.name} volume is trending ${needsAttention.volumeTrendPct}%. The Forge is keeping compound rep targets conservative instead of forcing intensity.`
+      : args.intelligence?.recent.length
+        ? `Recent workload is stable. This plan prioritizes balanced progression over a large single-session spike.`
+        : `Complete a few sessions and the Forge will begin calibrating exercise-specific progression from your history.`;
+
+  const qualityScore = scorePlan({targetXP,projectedXP,exercises,snapshot:args.snapshot,intelligence:args.intelligence});
+
   return {
     id: `forge-${Date.now()}`,
     name: `${targetXP} XP ${resolvedFocus === 'full' ? 'Full Body' : resolvedFocus === 'upper' ? 'Upper Body' : 'Lower Body'} Trial`,
@@ -113,6 +146,9 @@ export function generateWorkoutPlan(args: {
     projectedXP,
     estimatedMinutes,
     rationale,
+    coachingNote,
+    qualityScore,
+    qualityLabel: qualityLabel(qualityScore),
     exercises,
   };
 }

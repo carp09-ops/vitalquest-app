@@ -1,0 +1,23 @@
+import { router } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
+import React,{useEffect,useState} from 'react';
+import { Platform,Pressable,SafeAreaView,ScrollView,StyleSheet,Text,View } from 'react-native';
+import { getEquipmentProfile,saveEquipmentProfile } from './db';
+import { EQUIPMENT_OPTIONS,EquipmentId } from './trainingPreferences';
+import { useVitalTheme } from './ThemeProvider';
+
+export default function EquipmentProfileV2(){
+  const db=useSQLiteContext();const {theme}=useVitalTheme();const t=theme.tokens;
+  const [selected,setSelected]=useState<EquipmentId[]>([]);const [loaded,setLoaded]=useState(false);const [saved,setSaved]=useState(false);
+  useEffect(()=>{getEquipmentProfile(db).then(value=>{setSelected(value);setLoaded(true)})},[db]);
+  const toggle=(id:EquipmentId)=>{setSaved(false);setSelected(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id])};
+  async function save(){const next=selected.length?selected:['bodyweight'];await saveEquipmentProfile(db,next);setSelected(next);setSaved(true)}
+  return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><ScrollView contentContainerStyle={styles.page}><View style={styles.shell}>
+    <Pressable onPress={()=>router.back()}><Text style={[styles.back,{color:t.muted}]}>‹ TRAIN</Text></Pressable>
+    <View><Text style={[styles.eyebrow,{color:t.accent}]}>TRAINING ENVIRONMENT</Text><Text style={[styles.title,{color:t.text}]}>What can you actually use?</Text><Text style={[styles.copy,{color:t.muted}]}>VitalQuest will exclude exercises that require equipment you do not have. Change this whenever your training environment changes.</Text></View>
+    <View style={styles.grid}>{EQUIPMENT_OPTIONS.map(item=>{const active=selected.includes(item.id);return <Pressable key={item.id} onPress={()=>toggle(item.id)} style={[styles.card,{borderColor:active?t.accent:t.border,backgroundColor:active?t.surfaceElevated:t.surface}]}><View style={styles.row}><Text style={[styles.cardTitle,{color:t.text}]}>{item.label}</Text><View style={[styles.check,{borderColor:active?t.accent:t.border,backgroundColor:active?t.accent:'transparent'}]}><Text style={{color:active?t.background:t.muted,fontWeight:'900'}}>{active?'✓':'+'}</Text></View></View><Text style={[styles.cardCopy,{color:t.muted}]}>{item.description}</Text></Pressable>})}</View>
+    <View style={[styles.summary,{borderColor:t.border,backgroundColor:t.heroSurface}]}><Text style={[styles.eyebrow,{color:t.accent}]}>GENERATOR FILTER</Text><Text style={[styles.summaryTitle,{color:t.text}]}>{loaded?`${selected.length} equipment categories active`:'Loading profile…'}</Text><Text style={[styles.copy,{color:t.muted}]}>Adaptive workouts and Custom Loadouts use this profile before selecting movements.</Text></View>
+    <Pressable onPress={save} style={[styles.primary,{backgroundColor:t.accent}]}><Text style={[styles.primaryText,{color:t.background}]}>{saved?'PROFILE SAVED':'SAVE EQUIPMENT PROFILE'}</Text></Pressable>
+  </View></ScrollView></SafeAreaView>
+}
+const styles=StyleSheet.create({safe:{flex:1},page:{padding:16,paddingBottom:100},shell:{width:'100%',maxWidth:900,alignSelf:'center',gap:16},back:{fontSize:8,fontWeight:'900',letterSpacing:.8},eyebrow:{fontSize:8,fontWeight:'900',letterSpacing:1.3},title:{fontFamily:Platform.select({ios:'Georgia',default:'serif'}),fontSize:34,lineHeight:39,fontWeight:'900',marginTop:5},copy:{fontSize:10,lineHeight:16,marginTop:6,maxWidth:650},grid:{gap:9},card:{borderWidth:1,borderRadius:15,padding:14},row:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12},cardTitle:{fontSize:15,fontWeight:'900'},cardCopy:{fontSize:9,lineHeight:14,marginTop:5,maxWidth:600},check:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:'center',justifyContent:'center'},summary:{borderWidth:1,borderRadius:16,padding:15},summaryTitle:{fontSize:18,fontWeight:'900',marginTop:4},primary:{minHeight:54,borderRadius:9,alignItems:'center',justifyContent:'center'},primaryText:{fontSize:9,fontWeight:'900',letterSpacing:1}});

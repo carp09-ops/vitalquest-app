@@ -14,11 +14,20 @@ function ThemedStack() {
             headerShown: false,
             contentStyle: { backgroundColor: 'transparent' },
             animation: 'fade',
-            animationDuration: 260,
+            animationDuration: 300,
+            gestureEnabled: true,
           }}
         >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="workout" />
+          <Stack.Screen name="(tabs)" options={{animation:'fade'}} />
+          <Stack.Screen name="onboarding" options={{animation:'fade',gestureEnabled:false}} />
+          <Stack.Screen name="workout" options={{animation:'slide_from_bottom'}} />
+          <Stack.Screen name="generated-workout" options={{animation:'slide_from_bottom'}} />
+          <Stack.Screen name="custom-workout" options={{animation:'fade_from_bottom'}} />
+          <Stack.Screen name="forge" options={{animation:'fade_from_bottom'}} />
+          <Stack.Screen name="equipment" options={{animation:'fade_from_bottom'}} />
+          <Stack.Screen name="insights" options={{animation:'fade_from_bottom'}} />
+          <Stack.Screen name="verification" options={{animation:'fade_from_bottom'}} />
+          <Stack.Screen name="beta-feedback" options={{animation:'fade_from_bottom'}} />
         </Stack>
       </SQLiteProvider>
     </Suspense>

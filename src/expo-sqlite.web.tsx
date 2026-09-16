@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
-type WebStore = { workout_sessions:any[]; exercise_sets:any[]; endurance_sessions:any[]; xp_events:any[]; attribute_events:any[]; sync_outbox:any[]; };
-const STORAGE_KEY='vitalquest.webdb.v2';
-function emptyStore():WebStore{return{workout_sessions:[],exercise_sets:[],endurance_sessions:[],xp_events:[],attribute_events:[],sync_outbox:[]}}
-function loadStore():WebStore{if(typeof window==='undefined')return emptyStore();try{const raw=window.localStorage.getItem(STORAGE_KEY)??window.localStorage.getItem('vitalquest.webdb.v1');return raw?{...emptyStore(),...JSON.parse(raw)}:emptyStore()}catch{return emptyStore()}}
+type WebStore = { workout_sessions:any[]; exercise_sets:any[]; endurance_sessions:any[]; xp_events:any[]; attribute_events:any[]; sync_outbox:any[]; app_preferences:any[]; custom_workouts:any[]; };
+const STORAGE_KEY='vitalquest.webdb.v3';
+function emptyStore():WebStore{return{workout_sessions:[],exercise_sets:[],endurance_sessions:[],xp_events:[],attribute_events:[],sync_outbox:[],app_preferences:[],custom_workouts:[]}}
+function loadStore():WebStore{if(typeof window==='undefined')return emptyStore();try{const raw=window.localStorage.getItem(STORAGE_KEY)??window.localStorage.getItem('vitalquest.webdb.v2')??window.localStorage.getItem('vitalquest.webdb.v1');return raw?{...emptyStore(),...JSON.parse(raw)}:emptyStore()}catch{return emptyStore()}}
 function persistStore(store:WebStore){if(typeof window!=='undefined')window.localStorage.setItem(STORAGE_KEY,JSON.stringify(store))}
 function normalize(sql:string){return sql.replace(/\s+/g,' ').trim().toLowerCase()}
 
@@ -17,11 +17,15 @@ function createWebDb(){return{
     else if(normalized.includes('insert into xp_events'))store.xp_events.push({id:params[0],session_id:params[1],amount:params[2],reason:params[3],created_at:params[4]});
     else if(normalized.includes('insert into attribute_events'))store.attribute_events.push({id:params[0],session_id:params[1],attribute:params[2],amount:params[3],reason:params[4],created_at:params[5]});
     else if(normalized.includes('insert into sync_outbox'))store.sync_outbox.push({id:params[0],entity_type:params[1],entity_id:params[2],operation:params[3],payload_json:params[4],status:'pending',retry_count:0,created_at:params[5]});
+    else if(normalized.includes('insert or replace into app_preferences')){const next={key:params[0],value_json:params[1],updated_at:params[2]};store.app_preferences=store.app_preferences.filter(row=>row.key!==next.key);store.app_preferences.push(next);}
+    else if(normalized.includes('insert or replace into custom_workouts')){const next={id:params[0],name:params[1],exercises_json:params[2],created_at:params[3],updated_at:params[4]};store.custom_workouts=store.custom_workouts.filter(row=>row.id!==next.id);store.custom_workouts.push(next);}
+    else if(normalized.includes('delete from custom_workouts'))store.custom_workouts=store.custom_workouts.filter(row=>row.id!==params[0]);
     persistStore(store);return{changes:1,lastInsertRowId:0};
   },
   async getFirstAsync<T=any>(sql:string,...params:any[]):Promise<T|null>{const store=loadStore();const normalized=normalize(sql);
+    if(normalized.includes("from app_preferences")&&normalized.includes("key='equipment_profile'")){const row=store.app_preferences.find(row=>row.key==='equipment_profile');return(row?{value_json:row.value_json}:null) as T|null}
     if(normalized.includes('select completed_at from workout_sessions')){const row=[...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at)))[0];return(row?{completed_at:row.completed_at}:null) as T|null}
-    if(normalized.includes('count(*)')&&normalized.includes('from workout_sessions')){let rows=store.workout_sessions;const literal=normalized.match(/template_id\s*=\s*['"]([^'"]+)['"]/i)?.[1];if(literal)rows=rows.filter(row=>row.template_id===literal);if(normalized.includes("template_id in ('push','pull','legs')"))rows=rows.filter(row=>['push','pull','legs'].includes(row.template_id));if(normalized.includes('completed_at >= ?'))rows=rows.filter(row=>row.completed_at>=params[0]);return{total:rows.length} as T}
+    if(normalized.includes('count(*)')&&normalized.includes('from workout_sessions')){let rows=store.workout_sessions;const literal=normalized.match(/template_id\s*=\s*['"]([^'"]+)['"]/i)?.[1];if(literal)rows=rows.filter(row=>row.template_id===literal);if(normalized.includes("template_id in ('push','pull','legs')"))rows=rows.filter(row=>['push','pull','legs'].includes(row.template_id));if(normalized.includes("template_id like 'ai-%'"))rows=rows.filter(row=>String(row.template_id).startsWith('ai-'));if(normalized.includes('completed_at >= ?'))rows=rows.filter(row=>row.completed_at>=params[0]);return{total:rows.length} as T}
     if(normalized.includes('sum(total_volume)')&&normalized.includes('from workout_sessions')){let rows=store.workout_sessions;if(normalized.includes('completed_at >= ?'))rows=rows.filter(row=>row.completed_at>=params[0]);return{total:rows.reduce((sum,row)=>sum+Number(row.total_volume||0),0)} as T}
     if(normalized.includes('sum(total_xp)')&&normalized.includes('from workout_sessions')){let rows=store.workout_sessions;if(normalized.includes('completed_at >= ?'))rows=rows.filter(row=>row.completed_at>=params[0]);return{total:rows.reduce((sum,row)=>sum+Number(row.total_xp||0),0)} as T}
     if(normalized.includes('count(*)')&&normalized.includes('from exercise_sets')&&normalized.includes('is_pr=1'))return{total:store.exercise_sets.filter(row=>Number(row.is_pr)===1).length} as T;
@@ -31,9 +35,11 @@ function createWebDb(){return{
     return null;
   },
   async getAllAsync<T=any>(sql:string,...params:any[]):Promise<T[]>{const store=loadStore();const normalized=normalize(sql);
+    if(normalized.includes('select completed_at from workout_sessions')&&normalized.includes('order by completed_at desc'))return [...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,90).map(row=>({completed_at:row.completed_at})) as T[];
     if(normalized.includes('distinct substr(completed_at,1,10)')&&normalized.includes('from workout_sessions')){const days=Array.from(new Set(store.workout_sessions.map(row=>String(row.completed_at).slice(0,10)))).sort((a,b)=>b.localeCompare(a)).slice(0,90).map(day=>({day}));return days as T[]}
-    if(normalized.includes('from workout_sessions')&&normalized.includes('order by completed_at desc')&&normalized.includes('limit 12')){return [...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,12) as T[]}
-    if(normalized.includes('from exercise_sets')&&normalized.includes('order by completed_at desc')){return [...store.exercise_sets].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,240) as T[]}
+    if(normalized.includes('from workout_sessions')&&normalized.includes('order by completed_at desc')&&normalized.includes('limit 12'))return [...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,12) as T[];
+    if(normalized.includes('from exercise_sets')&&normalized.includes('order by completed_at desc'))return [...store.exercise_sets].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,240) as T[];
+    if(normalized.includes('from custom_workouts'))return [...store.custom_workouts].sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at))) as T[];
     return[];
   }
 }}

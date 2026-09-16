@@ -121,6 +121,25 @@ type BaseSession = {sessionId:string;templateId:string;name:string;startedAt:str
 
 function defaultModality(templateId:string){if(templateId==='run')return'endurance'as const;if(templateId==='recovery')return'recovery'as const;return'resistance'as const;}
 
+function withResistanceSupportGains(input:BaseSession,gains:AttributeGain[]){
+  if(defaultModality(input.templateId)!=='resistance')return gains;
+  const next=[...gains];
+  const completedUnits=Math.max(1,Number(input.verificationEvidence?.completedUnits||0));
+  const lowerBody=input.templateId==='legs'||input.templateId.includes('lower')||input.templateId.includes('full');
+  const hasDiscipline=next.some(gain=>gain.attribute==='discipline');
+  const hasStamina=next.some(gain=>gain.attribute==='stamina');
+  const strength=next.find(gain=>gain.attribute==='strength')?.amount??0;
+  if(!hasDiscipline){
+    const discipline=Math.min(22,Math.max(5,Math.round(completedUnits*1.15+Math.min(8,input.durationMinutes/10))));
+    next.push({attribute:'discipline',amount:discipline,reason:'training_consistency'});
+  }
+  if(lowerBody&&!hasStamina){
+    const stamina=Math.min(28,Math.max(6,Math.round(strength*.3)));
+    next.push({attribute:'stamina',amount:stamina,reason:'lower_body_capacity'});
+  }
+  return next;
+}
+
 async function writeSessionBase(db:SQLiteDatabase,input:BaseSession){
   const modality=defaultModality(input.templateId);
   const integrity=await evaluateSessionIntegrity(db,{startedAt:input.startedAt,completedAt:input.completedAt,durationMinutes:input.durationMinutes});
@@ -128,7 +147,8 @@ async function writeSessionBase(db:SQLiteDatabase,input:BaseSession){
   const baseEvidence:VerificationEvidence={source:'live_app',modality,durationMinutes:input.durationMinutes,totalVolume:input.totalVolume,liveTracked:true,...input.verificationEvidence};
   const evidence=mergeVerificationEvidence(baseEvidence,healthEvidence);
   const trust=evaluateXPTrust(input.totalXP,{...evidence,duplicateDetected:integrity.duplicateDetected||Boolean(evidence.duplicateDetected),clockMismatch:integrity.clockMismatch||Boolean(evidence.clockMismatch)});
-  const rawAttributeGains:AttributeGain[]=input.attributeGains?.length?input.attributeGains:input.strengthXP?[{attribute:'strength',amount:input.strengthXP,reason:'resistance_training'}]:[];
+  const baseAttributeGains:AttributeGain[]=input.attributeGains?.length?input.attributeGains:input.strengthXP?[{attribute:'strength',amount:input.strengthXP,reason:'resistance_training'}]:[];
+  const rawAttributeGains=withResistanceSupportGains(input,baseAttributeGains);
   const attributeGains=rawAttributeGains.map(gain=>({...gain,amount:scaleTrustedAmount(gain.amount,trust.multiplier)}));
   await db.runAsync(`INSERT INTO workout_sessions (id, template_id, name, started_at, completed_at, duration_minutes, total_volume, total_xp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,input.sessionId,input.templateId,input.name,input.startedAt,input.completedAt,input.durationMinutes,input.totalVolume,trust.awardedXP);
   await db.runAsync(`INSERT INTO xp_events (id, session_id, amount, reason, created_at) VALUES (?, ?, ?, ?, ?)`,`${input.sessionId}-xp`,input.sessionId,trust.awardedXP,`workout_complete:${trust.tier.toLowerCase()}`,input.completedAt);
@@ -157,7 +177,7 @@ export async function saveEquipmentProfile(db:SQLiteDatabase,equipment:Equipment
 export async function getHeroArchetype(db:SQLiteDatabase):Promise<HeroArchetype>{const row=await db.getFirstAsync<{value_json:string}>(`SELECT value_json FROM app_preferences WHERE key='hero_archetype' LIMIT 1`);if(!row?.value_json)return 'athlete';try{const parsed=JSON.parse(row.value_json);return parsed==='mystic'||parsed==='athlete'||parsed==='spartan'?parsed:'athlete';}catch{return 'athlete';}}
 export async function saveHeroArchetype(db:SQLiteDatabase,archetype:HeroArchetype){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO app_preferences (key, value_json, updated_at) VALUES (?, ?, ?)`, 'hero_archetype',JSON.stringify(archetype),now);}
 export async function getCustomWorkouts(db:SQLiteDatabase):Promise<CustomWorkoutTemplate[]>{const rows=await db.getAllAsync<{id:string;name:string;exercises_json:string;created_at:string}>(`SELECT id, name, exercises_json, created_at FROM custom_workouts ORDER BY updated_at DESC`);return rows.map(row=>({id:row.id,name:row.name,createdAt:row.created_at,exercises:JSON.parse(row.exercises_json||'[]')}));}
-export async function saveCustomWorkout(db:SQLiteDatabase,workout:CustomWorkoutTemplate){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO custom_workouts (id, name, exercises_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,workout.id,workout.name,JSON.stringify(workout.exercises),workout.createdAt||now,now);}
+export async function saveCustomWorkout(db:SQLiteDatabase,workout:CustomWorkoutTemplate){const now=new Date().toISOString();await db.runAsync(`INSERT OR REPLACE INTO app_preferences (key, value_json, updated_at) VALUES (?, ?, ?)`, 'custom_workout_last_saved',JSON.stringify(workout.id),now);await db.runAsync(`INSERT OR REPLACE INTO custom_workouts (id, name, exercises_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,workout.id,workout.name,JSON.stringify(workout.exercises),workout.createdAt||now,now);}
 export async function deleteCustomWorkout(db:SQLiteDatabase,id:string){await db.runAsync(`DELETE FROM custom_workouts WHERE id = ?`,id);}
 export async function getLifetimeXP(db:SQLiteDatabase){const row=await db.getFirstAsync<{total:number}>(`SELECT COALESCE(SUM(amount), 0) AS total FROM xp_events`);return row?.total??0;}
 export async function getLifetimeAttributeXP(db:SQLiteDatabase,attribute:string){const row=await db.getFirstAsync<{total:number}>(`SELECT COALESCE(SUM(amount), 0) AS total FROM attribute_events WHERE attribute = ?`,attribute);return row?.total??0;}

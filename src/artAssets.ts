@@ -14,6 +14,18 @@ export const ART={
   },
   training:`${ART_BASE}/training-hall.webp`,
   quest:`${ART_BASE}/quest-gate.webp`,
+  encounters:{
+    push:`${ART_BASE}/training-hall.webp`,
+    pull:`${ART_BASE}/training-hall.webp`,
+    legs:`${ART_BASE}/training-hall.webp`,
+    run:`${ART_BASE}/mythic-world.webp`,
+    recovery:`${ART_BASE}/mythic-world.webp`,
+  },
+  armory:{
+    hall:`${ART_BASE}/mythic-world.webp`,
+    gearFallback:`${ART_BASE}/mythic-hero.webp`,
+  },
+  loading:`${ART_BASE}/mythic-world.webp`,
   branding:{
     icon192:`${BRAND_BASE}/icon-192.png`,
     icon512:`${BRAND_BASE}/icon-512.png`,

@@ -18,6 +18,9 @@ export type ExerciseInsight = {
   recentVolume: number;
   previousVolume: number;
   volumeTrendPct: number;
+  lastWeight: number;
+  lastReps: number;
+  estimatedOneRepMax: number;
   lastPerformedAt: string | null;
 };
 
@@ -99,6 +102,11 @@ export async function getTrainingIntelligence(db: SQLiteDatabase): Promise<Train
     const recentVolume = recentSets.length ? recentSets.reduce((a,b)=>a+b,0) / recentSets.length : 0;
     const previousVolume = previousSets.length ? previousSets.reduce((a,b)=>a+b,0) / previousSets.length : recentVolume;
     const volumeTrendPct = previousVolume > 0 ? ((recentVolume - previousVolume) / previousVolume) * 100 : 0;
+    const lastWeight = Number(sets[0]?.weight ?? 0);
+    const lastReps = Number(sets[0]?.reps ?? 0);
+    const oneRmCandidates = sets
+      .filter(set => Number(set.weight) > 0 && Number(set.reps) > 0)
+      .map(set => Number(set.weight) * (1 + Number(set.reps) / 30));
     return {
       exerciseId,
       name: sets[0]?.exercise_name ?? exerciseId,
@@ -108,6 +116,9 @@ export async function getTrainingIntelligence(db: SQLiteDatabase): Promise<Train
       recentVolume: Math.round(recentVolume),
       previousVolume: Math.round(previousVolume),
       volumeTrendPct: Math.round(volumeTrendPct),
+      lastWeight,
+      lastReps,
+      estimatedOneRepMax: Math.round(Math.max(...oneRmCandidates, 0)),
       lastPerformedAt: sets[0]?.completed_at ?? null,
     };
   }).sort((a,b)=>b.sessions-a.sessions || b.recentVolume-a.recentVolume);

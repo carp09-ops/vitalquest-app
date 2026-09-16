@@ -12,6 +12,9 @@ export type VerificationEvidence={
   avgPaceSeconds?:number;
   liveTracked?:boolean;
   sensorMinutes?:number;
+  setTimestamps?:string[];
+  medianSetGapSeconds?:number;
+  cadenceCoverage?:number;
   duplicateDetected?:boolean;
   clockMismatch?:boolean;
   implausibleSpike?:boolean;
@@ -64,6 +67,12 @@ export function evaluateXPTrust(rawXP:number,input:VerificationEvidence={}):XPTr
     const volume=Number(evidence.totalVolume||0);
     if(volume>0){score+=7;reasons.push('Logged resistance volume corroborates completion.');}
     if(volume>250000){score-=20;reasons.push('Single-session lifting volume is outside normal plausibility bounds.');}
+    const cadenceCoverage=clamp(Number(evidence.cadenceCoverage||0),0,1);
+    const medianGap=Number(evidence.medianSetGapSeconds||0);
+    if(cadenceCoverage>=.6&&units>=3){score+=8;reasons.push('Per-set timestamps cover most of the lifting session.');}
+    if(medianGap>=20&&medianGap<=600&&units>=3){score+=6;reasons.push('Set cadence is consistent with live resistance training.');}
+    else if(medianGap>0&&medianGap<8&&units>=3){score-=25;reasons.push('Sets were completed too rapidly to support the reported workout.');}
+    if(Array.isArray(evidence.setTimestamps)&&evidence.setTimestamps.length===units&&units>=3){score+=3;reasons.push('Every completed set has live timing evidence.');}
   }
 
   if(evidence.modality==='endurance'){

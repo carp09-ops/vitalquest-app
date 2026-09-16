@@ -9,7 +9,7 @@ type Props={archetype:HeroArchetype;strength?:'soft'|'medium'|'strong';position?
 const WORLD:Record<HeroArchetype,string>={mystic:MYSTIC_WORLD,athlete:ATHLETE_WORLD,spartan:SPARTAN_WORLD};
 
 export default function WorldArt({archetype,strength='medium',position='center'}:Props){
-  const veil=strength==='soft'?.68:strength==='strong'?.32:.48;
+  const veil=strength==='soft' ? .68 : strength==='strong' ? .32 : .48;
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
     <Image source={{uri:WORLD[archetype]}} resizeMode="cover" style={[StyleSheet.absoluteFill,position==='top'&&styles.top]}/>
     <View style={[StyleSheet.absoluteFill,{backgroundColor:`rgba(4,7,10,${veil})`}]}/>

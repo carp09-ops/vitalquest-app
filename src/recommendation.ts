@@ -1,48 +1,15 @@
+import { templates } from './data';
 import { ProgressionSnapshot } from './progression';
+import { EquipmentId, EXERCISE_CATALOG, equipmentSupports } from './trainingPreferences';
 
-export type TrialId = 'push' | 'pull' | 'legs' | 'run' | 'recovery';
-type ResistanceTrialId = 'push' | 'pull' | 'legs';
-
-export type TrainingRecommendation = {
-  templateId: TrialId;
-  label: string;
-  title: string;
-  reason: string;
-  attributeFocus: string;
-};
-
-export function getTrainingRecommendation(snapshot: ProgressionSnapshot): TrainingRecommendation {
-  const strengthLead = snapshot.strengthXP - Math.max(snapshot.staminaXP, snapshot.agilityXP);
-  const needsRecovery = snapshot.thisWeekWorkouts >= 3 && snapshot.thisWeekRecoverySessions === 0;
-  const needsEndurance = snapshot.workoutCount >= 2 && snapshot.lifetimeMiles < Math.max(3, snapshot.workoutCount * 0.35) && strengthLead > 20;
-
-  if (needsRecovery) {
-    return {
-      templateId: 'recovery',
-      label: 'RECOVERY RECOMMENDED',
-      title: 'Restore capacity before the next push.',
-      reason: 'You have stacked multiple training encounters this week without a recovery session. A mobility protocol now supports Vitality and Discipline instead of adding more fatigue.',
-      attributeFocus: 'VITALITY · DISCIPLINE',
-    };
-  }
-
-  if (needsEndurance) {
-    return {
-      templateId: 'run',
-      label: 'BALANCE RECOMMENDED',
-      title: 'Build the engine behind the armor.',
-      reason: 'Your Strength progression is outpacing endurance work. A run closes the attribute gap by adding Stamina and Agility XP.',
-      attributeFocus: 'STAMINA · AGILITY',
-    };
-  }
-
-  const rotation: ResistanceTrialId[] = ['push', 'pull', 'legs'];
-  const templateId = rotation[snapshot.workoutCount % rotation.length];
-  const copy: Record<ResistanceTrialId, Omit<TrainingRecommendation, 'templateId'>> = {
-    push: { label: 'PRIMARY TRIAL', title: 'Build pressing strength.', reason: 'Your current rotation points to Push Day. Previous working weights are ready so you can progress without rebuilding the session.', attributeFocus: 'STRENGTH · POWER' },
-    pull: { label: 'PRIMARY TRIAL', title: 'Build pulling strength and control.', reason: 'Your current rotation points to Pull Day, balancing pressing work with back strength and control.', attributeFocus: 'STRENGTH · CONTROL' },
-    legs: { label: 'PRIMARY TRIAL', title: 'Raise lower-body capacity.', reason: 'Your current rotation points to Leg Day, keeping total-body strength development balanced.', attributeFocus: 'STRENGTH · CAPACITY' },
-  };
-
-  return { templateId, ...copy[templateId] };
+export type TrialId='push'|'pull'|'legs'|'run'|'recovery';
+type ResistanceTrialId='push'|'pull'|'legs';
+export type TrainingRecommendation={templateId:TrialId;label:string;title:string;reason:string;attributeFocus:string};
+function templateSupported(id:TrialId,equipment?:EquipmentId[]){if(!equipment?.length)return true;if(id==='run')return equipment.includes('cardio');if(id==='recovery')return equipment.includes('bodyweight');const template=templates.find(item=>item.id===id);if(!template)return false;return template.exercises.every(exercise=>{const catalog=EXERCISE_CATALOG.find(item=>item.id===exercise.id);return !catalog||equipmentSupports(catalog.equipment,equipment)})}
+export function getTrainingRecommendation(snapshot:ProgressionSnapshot,equipment?:EquipmentId[]):TrainingRecommendation{
+  const strengthLead=snapshot.strengthXP-Math.max(snapshot.staminaXP,snapshot.agilityXP);const needsRecovery=snapshot.thisWeekWorkouts>=3&&snapshot.thisWeekRecoverySessions===0;const needsEndurance=snapshot.workoutCount>=2&&snapshot.lifetimeMiles<Math.max(3,snapshot.workoutCount*.35)&&strengthLead>20;
+  if(needsRecovery&&templateSupported('recovery',equipment))return{templateId:'recovery',label:'RECOVERY RECOMMENDED',title:'Restore capacity before the next push.',reason:'You have stacked multiple training encounters this week without a recovery session. A mobility protocol supports Vitality and Discipline instead of adding more fatigue.',attributeFocus:'VITALITY · DISCIPLINE'};
+  if(needsEndurance&&templateSupported('run',equipment))return{templateId:'run',label:'BALANCE RECOMMENDED',title:'Build the engine behind the armor.',reason:'Your Strength progression is outpacing endurance work. An endurance session closes the attribute gap with Stamina and Agility XP.',attributeFocus:'STAMINA · AGILITY'};
+  const rotation:ResistanceTrialId[]=['push','pull','legs'];const supported=rotation.filter(id=>templateSupported(id,equipment));if(!supported.length){if(templateSupported('recovery',equipment))return{templateId:'recovery',label:'EQUIPMENT-SAFE TRIAL',title:'Train what your environment supports.',reason:'Your current equipment profile does not support the standard resistance templates, so VitalQuest selected a bodyweight recovery protocol. The Forge can build a more specific equipment-safe session.',attributeFocus:'VITALITY · DISCIPLINE'};return{templateId:'run',label:'EQUIPMENT-SAFE TRIAL',title:'Build capacity with what is available.',reason:'Your current equipment profile does not support the standard resistance templates. Use endurance or update your equipment profile.',attributeFocus:'STAMINA · AGILITY'}}
+  const templateId=supported[snapshot.resistanceWorkoutCount%supported.length];const copy:Record<ResistanceTrialId,Omit<TrainingRecommendation,'templateId'>>={push:{label:'PRIMARY TRIAL',title:'Build pressing strength.',reason:'Your resistance rotation and equipment profile point to Push Day. Logged history will calibrate working loads where available.',attributeFocus:'STRENGTH · POWER'},pull:{label:'PRIMARY TRIAL',title:'Build pulling strength and control.',reason:'Your resistance rotation points to Pull Day, balancing pressing work with back strength and control.',attributeFocus:'STRENGTH · CONTROL'},legs:{label:'PRIMARY TRIAL',title:'Raise lower-body capacity.',reason:'Your resistance rotation points to Leg Day, keeping total-body strength development balanced.',attributeFocus:'STRENGTH · CAPACITY'}};return{templateId,...copy[templateId]};
 }

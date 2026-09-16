@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { CustomWorkoutTemplate, DEFAULT_EQUIPMENT, EquipmentId } from './trainingPreferences';
+import { evaluateXPTrust, scaleTrustedAmount, VerificationEvidence } from './xpTrust';
 
 export async function migrateDb(db: SQLiteDatabase) {
   await db.execAsync(`
@@ -60,6 +61,20 @@ export async function migrateDb(db: SQLiteDatabase) {
       FOREIGN KEY (session_id) REFERENCES workout_sessions(id) ON DELETE SET NULL
     );
 
+    CREATE TABLE IF NOT EXISTS session_verification (
+      session_id TEXT PRIMARY KEY NOT NULL,
+      raw_xp INTEGER NOT NULL DEFAULT 0,
+      awarded_xp INTEGER NOT NULL DEFAULT 0,
+      withheld_xp INTEGER NOT NULL DEFAULT 0,
+      confidence INTEGER NOT NULL DEFAULT 0,
+      multiplier REAL NOT NULL DEFAULT 0,
+      tier TEXT NOT NULL,
+      evidence_json TEXT NOT NULL,
+      reasons_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES workout_sessions(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS app_preferences (
       key TEXT PRIMARY KEY NOT NULL,
       value_json TEXT NOT NULL,
@@ -105,9 +120,31 @@ type BaseSession = {
   strengthXP?: number;
   attributeGains?: AttributeGain[];
   syncDetails?: Record<string, unknown>;
+  verificationEvidence?: VerificationEvidence;
 };
 
+function defaultModality(templateId:string){
+  if(templateId==='run')return 'endurance' as const;
+  if(templateId==='recovery')return 'recovery' as const;
+  return 'resistance' as const;
+}
+
 async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
+  const trust=evaluateXPTrust(input.totalXP,{
+    source:'live_app',
+    modality:defaultModality(input.templateId),
+    durationMinutes:input.durationMinutes,
+    totalVolume:input.totalVolume,
+    liveTracked:true,
+    ...input.verificationEvidence,
+  });
+  const rawAttributeGains: AttributeGain[] = input.attributeGains?.length
+    ? input.attributeGains
+    : input.strengthXP
+      ? [{ attribute: 'strength', amount: input.strengthXP, reason: 'resistance_training' }]
+      : [];
+  const attributeGains=rawAttributeGains.map(gain=>({...gain,amount:scaleTrustedAmount(gain.amount,trust.multiplier)}));
+
   await db.runAsync(
     `INSERT INTO workout_sessions
      (id, template_id, name, started_at, completed_at, duration_minutes, total_volume, total_xp)
@@ -119,7 +156,7 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     input.completedAt,
     input.durationMinutes,
     input.totalVolume,
-    input.totalXP
+    trust.awardedXP
   );
 
   await db.runAsync(
@@ -127,16 +164,10 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
      VALUES (?, ?, ?, ?, ?)`,
     `${input.sessionId}-xp`,
     input.sessionId,
-    input.totalXP,
-    'workout_complete',
+    trust.awardedXP,
+    `workout_complete:${trust.tier.toLowerCase()}`,
     input.completedAt
   );
-
-  const attributeGains: AttributeGain[] = input.attributeGains?.length
-    ? input.attributeGains
-    : input.strengthXP
-      ? [{ attribute: 'strength', amount: input.strengthXP, reason: 'resistance_training' }]
-      : [];
 
   for (const gain of attributeGains) {
     if (!gain.amount) continue;
@@ -147,19 +178,42 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
       input.sessionId,
       gain.attribute,
       gain.amount,
-      gain.reason,
+      `${gain.reason}:${trust.tier.toLowerCase()}`,
       input.completedAt
     );
   }
+
+  await db.runAsync(
+    `INSERT INTO session_verification
+     (session_id, raw_xp, awarded_xp, withheld_xp, confidence, multiplier, tier, evidence_json, reasons_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    input.sessionId,
+    trust.rawXP,
+    trust.awardedXP,
+    trust.withheldXP,
+    trust.confidence,
+    trust.multiplier,
+    trust.tier,
+    JSON.stringify(trust.evidence),
+    JSON.stringify(trust.reasons),
+    input.completedAt
+  );
 
   const payload = JSON.stringify({
     sessionId: input.sessionId,
     completedAt: input.completedAt,
     templateId: input.templateId,
-    totalXP: input.totalXP,
+    rawXP: trust.rawXP,
+    awardedXP: trust.awardedXP,
+    withheldXP: trust.withheldXP,
+    verificationTier: trust.tier,
+    verificationConfidence: trust.confidence,
+    verificationMultiplier: trust.multiplier,
+    verificationEvidence: trust.evidence,
     durationMinutes: input.durationMinutes,
     totalVolume: input.totalVolume,
     attributeGains,
+    rawAttributeGains,
     ...input.syncDetails,
   });
 
@@ -174,6 +228,7 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     payload,
     input.completedAt
   );
+  return trust;
 }
 
 export async function saveCompletedWorkout(
@@ -190,8 +245,17 @@ export async function saveCompletedWorkout(
     }>;
   }
 ) {
+  let trust:ReturnType<typeof evaluateXPTrust>|null=null;
   await db.withTransactionAsync(async () => {
-    await writeSessionBase(db, { ...input, syncDetails: { ...input.syncDetails, sets: input.sets } });
+    trust=await writeSessionBase(db, {
+      ...input,
+      verificationEvidence:{
+        completedUnits:input.sets.length,
+        totalVolume:input.totalVolume,
+        ...input.verificationEvidence,
+      },
+      syncDetails: { ...input.syncDetails, sets: input.sets },
+    });
     for (const set of input.sets) {
       await db.runAsync(
         `INSERT INTO exercise_sets
@@ -209,6 +273,7 @@ export async function saveCompletedWorkout(
       );
     }
   });
+  return trust!;
 }
 
 export async function saveCompletedEnduranceSession(
@@ -219,9 +284,17 @@ export async function saveCompletedEnduranceSession(
     activityType?: 'run' | 'walk' | 'bike' | string;
   }
 ) {
+  let trust:ReturnType<typeof evaluateXPTrust>|null=null;
   await db.withTransactionAsync(async () => {
-    await writeSessionBase(db, {
+    trust=await writeSessionBase(db, {
       ...input,
+      verificationEvidence:{
+        modality:'endurance',
+        completedUnits:1,
+        distanceMiles:input.distanceMiles,
+        avgPaceSeconds:input.avgPaceSeconds,
+        ...input.verificationEvidence,
+      },
       syncDetails: {
         ...input.syncDetails,
         distanceMiles: input.distanceMiles,
@@ -242,6 +315,7 @@ export async function saveCompletedEnduranceSession(
       input.completedAt
     );
   });
+  return trust!;
 }
 
 export async function getEquipmentProfile(db: SQLiteDatabase): Promise<EquipmentId[]> {

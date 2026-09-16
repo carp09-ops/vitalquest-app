@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { EXERCISE_CATALOG } from './trainingPreferences';
-import { getCoachingCalibration, type CoachingCalibration } from './coachingCalibration';
+import { captureLatestCoachingOutcome, getCoachingCalibration, type CoachingCalibration } from './coachingCalibration';
 
 export type RecentTrainingSession = {templateId:string;name:string;totalXP:number;totalVolume:number;durationMinutes:number;completedAt:string;};
 export type ExerciseInsight = {exerciseId:string;name:string;sessions:number;topWeight:number;bestVolumeSet:number;recentVolume:number;previousVolume:number;volumeTrendPct:number;lastWeight:number;lastReps:number;estimatedOneRepMax:number;lastPerformedAt:string|null;};
@@ -17,6 +17,7 @@ function dayKey(value:string){const d=new Date(value);return `${d.getFullYear()}
 function baseMuscle(exerciseId:string){const muscle=EXERCISE_CATALOG.find(item=>item.id===exerciseId)?.muscle?.split('·')[0]?.trim();return muscle||'Other'}
 
 export async function getTrainingIntelligence(db:SQLiteDatabase):Promise<TrainingIntelligence>{
+  await captureLatestCoachingOutcome(db);
   const sessionRows=await db.getAllAsync<{template_id:string|null;name:string;total_xp:number;total_volume:number;duration_minutes:number;completed_at:string}>(`SELECT template_id, name, total_xp, total_volume, duration_minutes, completed_at FROM workout_sessions ORDER BY completed_at DESC LIMIT 12`);
   const recent=sessionRows.map(row=>({templateId:row.template_id??'unknown',name:row.name,totalXP:Number(row.total_xp??0),totalVolume:Number(row.total_volume??0),durationMinutes:Number(row.duration_minutes??0),completedAt:row.completed_at}));
   const setRows=await db.getAllAsync<{session_id:string;exercise_id:string;exercise_name:string;weight:number;reps:number;is_pr:number;completed_at:string}>(`SELECT session_id, exercise_id, exercise_name, weight, reps, is_pr, completed_at FROM exercise_sets ORDER BY completed_at DESC LIMIT 240`);

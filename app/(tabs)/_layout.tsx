@@ -18,8 +18,8 @@ function NavIcon({ name, focused, accent }: { name: keyof typeof NAV; focused: b
   const { theme } = useVitalTheme();
   const t = theme.tokens;
   return (
-    <View style={[styles.iconShell, focused && { backgroundColor: `${accent}10`, borderColor: `${accent}3D` }]}>
-      <IconArt name={NAV[name]} size={29} opacity={focused ? 1 : .48} tint={focused ? accent : t.muted} quiet={!focused} />
+    <View style={[styles.iconShell, focused && { backgroundColor: `${accent}14`, borderColor: `${accent}52` }]}>
+      <IconArt name={NAV[name]} size={34} opacity={focused ? 1 : .54} tint={focused ? accent : t.muted} quiet={!focused} />
       {focused ? <View style={[styles.activePip, { backgroundColor: accent }]} /> : null}
     </View>
   );
@@ -38,9 +38,9 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: [
           styles.tabBar,
-          { backgroundColor: t.navBackground, borderColor: t.border },
+          { backgroundColor: t.navBackground, borderColor: `${t.text}18` },
           Platform.OS === 'web'
-            ? ({ boxShadow: '0 18px 55px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.045)', backdropFilter: 'blur(28px)' } as any)
+            ? ({ boxShadow: '0 20px 64px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.055)', backdropFilter: 'blur(30px)' } as any)
             : null,
         ],
         tabBarActiveTintColor: t.text,
@@ -60,15 +60,15 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    position: 'absolute', left: 12, right: 12, bottom: 10, height: 78,
-    borderWidth: 1, borderTopWidth: 1, borderRadius: 22,
-    paddingTop: 6, paddingBottom: 8, overflow: 'hidden',
+    position: 'absolute', left: 14, right: 14, bottom: 12, height: 90,
+    borderWidth: 1, borderTopWidth: 1, borderRadius: 26,
+    paddingTop: 8, paddingBottom: 10, overflow: 'hidden',
   },
   item: { paddingTop: 0 },
-  label: { fontSize: 7.25, fontWeight: '800', letterSpacing: 1.05, textTransform: 'uppercase', marginTop: -1 },
+  label: { fontSize: 8.25, fontWeight: '900', letterSpacing: 1.15, textTransform: 'uppercase', marginTop: 0 },
   iconShell: {
-    width: 43, height: 43, borderRadius: 14, borderWidth: 1, borderColor: 'transparent',
+    width: 50, height: 50, borderRadius: 16, borderWidth: 1, borderColor: 'transparent',
     alignItems: 'center', justifyContent: 'center', position: 'relative',
   },
-  activePip: { position: 'absolute', bottom: -3, width: 16, height: 2, borderRadius: 99 },
+  activePip: { position: 'absolute', bottom: -4, width: 20, height: 3, borderRadius: 99 },
 });

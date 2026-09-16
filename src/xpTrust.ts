@@ -31,10 +31,9 @@ export type XPTrustResult={
 function clamp(n:number,min:number,max:number){return Math.max(min,Math.min(max,n))}
 
 function multiplierFor(confidence:number){
-  if(confidence>=85)return 1;
-  if(confidence>=65)return .9;
+  if(confidence>=65)return 1;
   if(confidence>=45)return .75;
-  return .6;
+  return .55;
 }
 function tierFor(confidence:number):VerificationTier{
   if(confidence>=85)return 'VERIFIED';

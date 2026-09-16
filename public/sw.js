@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vitalquest-shell-v1';
+const CACHE_NAME = 'vitalquest-shell-v3';
 const APP_ROOT = '/vitalquest-app/';
 
 self.addEventListener('install', (event) => {
@@ -25,18 +25,17 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin || !url.pathname.startsWith(APP_ROOT)) return;
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          }
-          return response;
-        })
-        .catch(() => cached || caches.match(APP_ROOT));
-
-      return cached || network;
-    })
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        return cached || caches.match(APP_ROOT);
+      })
   );
 });

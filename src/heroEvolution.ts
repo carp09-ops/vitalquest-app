@@ -1,4 +1,5 @@
 import type { ProgressionSnapshot } from './progression';
+import { cumulativeXpForLevel } from './gameEngine';
 
 export type HeroArchetype = 'mystic' | 'athlete' | 'spartan';
 export type HeroAttribute = 'strength' | 'stamina' | 'agility' | 'vitality' | 'discipline';
@@ -93,6 +94,7 @@ export const HERO_ARCHETYPES: Record<HeroArchetype, {
 };
 
 export const ATTRIBUTE_THRESHOLDS = [0, 100, 250, 500, 900] as const;
+export const FORM_LEVELS = [1, 5, 9, 13, 17] as const;
 
 export const ATTRIBUTE_VISUALS: Record<HeroArchetype, Record<HeroAttribute, readonly [string, string, string, string, string]>> = {
   mystic: {
@@ -124,6 +126,20 @@ function formTierForLevel(level: number): HeroTier {
   if (level >= 9) return 3;
   if (level >= 5) return 2;
   return 1;
+}
+
+export function nextHeroFormMilestone(level: number, totalXP: number, archetype: HeroArchetype) {
+  const currentTier = formTierForLevel(level);
+  if (currentTier >= 5) return null;
+  const targetLevel = FORM_LEVELS[currentTier];
+  const targetXP = cumulativeXpForLevel(targetLevel);
+  return {
+    targetLevel,
+    targetXP,
+    xpRemaining: Math.max(0, targetXP - totalXP),
+    nextTier: (currentTier + 1) as HeroTier,
+    nextTitle: HERO_ARCHETYPES[archetype].tierTitles[currentTier],
+  };
 }
 
 export function attributeTierForXP(xp: number): HeroTier {

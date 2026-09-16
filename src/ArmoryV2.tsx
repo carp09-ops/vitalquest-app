@@ -2,6 +2,8 @@ import React,{useState} from 'react';
 import { ImageBackground, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { armory } from './data';
 import { IconArt } from './IconArt';
+import { progressionRules } from './progressionRules';
+import { ProgressionSnapshot } from './progression';
 import { themes, ThemeId } from './theme';
 import { useProgressionSnapshot } from './useProgression';
 import { useVitalTheme } from './ThemeProvider';
@@ -15,31 +17,31 @@ export default function ArmoryV2(){
   return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.page,wide&&styles.pageWide]}><View style={styles.shell}>
     <View style={styles.header}><View style={{flex:1}}><Text style={[styles.eyebrow,{color:t.accent}]}>REWARD REGISTRY</Text><Text style={[styles.title,{color:t.text}]}>The Armory</Text><Text style={[styles.lede,{color:t.muted}]}>Wear the proof. Display what your training has earned.</Text></View><View style={[styles.currency,{borderColor:t.border,backgroundColor:t.surface}]}><IconArt name="xp" size={28}/><View><Text style={[styles.currencyLabel,{color:t.muted}]}>LIFETIME XP</Text><Text style={[styles.currencyValue,{color:t.text}]}>{snapshot.totalXP.toLocaleString()}</Text></View></View></View>
     <View style={[styles.tabs,{borderColor:t.border,backgroundColor:t.surface}]}>{tabs.map(item=>{const active=item===tab;return <Pressable key={item} onPress={()=>setTab(item)} style={[styles.tab,active&&{backgroundColor:t.surfaceElevated,borderColor:t.accentSoft}]}><Text style={[styles.tabText,{color:active?t.accent:t.muted}]}>{item.toUpperCase()}</Text></Pressable>})}</View>
-    {tab==='Worlds'?<View style={styles.worldStack}>{(Object.keys(themes) as ThemeId[]).map(id=>{const item=themes[id];const active=id===themeId;return <Pressable key={id} onPress={()=>setThemeId(id)}><View style={[styles.worldCard,{borderColor:active?item.tokens.accent:item.tokens.border,backgroundColor:item.tokens.surface}]}><ImageBackground source={{uri:art[id]}} resizeMode="cover" style={styles.worldArt}><View style={styles.worldShade}/><View style={styles.worldCopy}><Text style={[styles.eyebrow,{color:item.tokens.accent}]}>{active?'ACTIVE WORLD':'AVAILABLE WORLD'}</Text><Text style={[styles.worldName,{color:item.tokens.text}]}>{item.name}</Text><Text style={[styles.worldTag,{color:item.tokens.text}]}>{item.tagline}</Text></View></ImageBackground><View style={styles.worldFooter}><Text style={[styles.worldFlavor,{color:item.tokens.muted}]}>{item.flavor}</Text><Text style={[styles.apply,{color:item.tokens.accent}]}>{active?'EQUIPPED':'EQUIP WORLD  ›'}</Text></View></View></Pressable>})}</View>:<RewardGrid tab={tab} wide={wide}/>} 
+    {tab==='Worlds'?<View style={styles.worldStack}>{(Object.keys(themes) as ThemeId[]).map(id=>{const item=themes[id];const active=id===themeId;return <Pressable key={id} onPress={()=>setThemeId(id)}><View style={[styles.worldCard,{borderColor:active?item.tokens.accent:item.tokens.border,backgroundColor:item.tokens.surface}]}><ImageBackground source={{uri:art[id]}} resizeMode="cover" style={styles.worldArt}><View style={styles.worldShade}/><View style={styles.worldCopy}><Text style={[styles.eyebrow,{color:item.tokens.accent}]}>{active?'ACTIVE WORLD':'AVAILABLE WORLD'}</Text><Text style={[styles.worldName,{color:item.tokens.text}]}>{item.name}</Text><Text style={[styles.worldTag,{color:item.tokens.text}]}>{item.tagline}</Text></View></ImageBackground><View style={styles.worldFooter}><Text style={[styles.worldFlavor,{color:item.tokens.muted}]}>{item.flavor}</Text><Text style={[styles.apply,{color:item.tokens.accent}]}>{active?'EQUIPPED':'EQUIP WORLD  ›'}</Text></View></View></Pressable>})}</View>:<RewardGrid tab={tab} wide={wide} snapshot={snapshot}/>} 
   </View></ScrollView></SafeAreaView>
 }
 
-function RewardGrid({tab,wide}:{tab:Exclude<Tab,'Worlds'>;wide:boolean}){
-  const {theme}=useVitalTheme();const {snapshot}=useProgressionSnapshot();const t=theme.tokens;
+function RewardGrid({tab,wide,snapshot}:{tab:Exclude<Tab,'Worlds'>;wide:boolean;snapshot:ProgressionSnapshot}){
+  const {theme}=useVitalTheme();const t=theme.tokens;const u=progressionRules.unlocks;
   const items=armory.filter(item=>tab==='Gear'?['Head','Chest','Legs','Aura'].includes(item.kind):tab==='Titles'?item.kind==='Title':item.kind==='Badge');
   const stateFor=(name:string)=>{
     if(name==='Iron Initiate') return snapshot.unlocks.ironInitiate?'unlocked':'locked';
-    if(name==='The Relentless') return snapshot.unlocks.relentless?'unlocked':'locked';
+    if(name==='The Relentless') return snapshot.unlocks.relentless?'unlocked':snapshot.streakDays>0?'progress':'locked';
     if(name==='The Restored') return snapshot.unlocks.restored?'unlocked':snapshot.recoveryCount>0?'progress':'locked';
     if(name==='Forged Helm') return snapshot.unlocks.forgedHelm?'unlocked':snapshot.workoutCount>0?'progress':'locked';
     if(name==='Titan Plate') return snapshot.unlocks.titanPlate?'unlocked':snapshot.totalVolume>0?'progress':'locked';
     if(name==='Roadrunner Greaves') return snapshot.unlocks.roadrunnerGreaves?'unlocked':snapshot.lifetimeMiles>0?'progress':'locked';
-    if(name==='Ember Aura') return snapshot.totalXP>=5000?'unlocked':snapshot.totalXP>0?'progress':'locked';
+    if(name==='Ember Aura') return snapshot.unlocks.emberAura?'unlocked':snapshot.totalXP>0?'progress':'locked';
     return 'locked';
   };
   const requirementFor=(name:string)=>{
-    if(name==='Iron Initiate') return `${Math.min(snapshot.workoutCount,1)} / 1 workout`;
-    if(name==='The Relentless') return `${Math.min(snapshot.streakDays,7)} / 7 day streak`;
-    if(name==='The Restored') return `${Math.min(snapshot.recoveryCount,5)} / 5 recovery protocols`;
-    if(name==='Forged Helm') return `${Math.min(snapshot.workoutCount,10)} / 10 workouts`;
-    if(name==='Titan Plate') return `${Math.min(Math.round(snapshot.totalVolume),100000).toLocaleString()} / 100,000 lb`;
-    if(name==='Roadrunner Greaves') return `${Math.min(snapshot.lifetimeMiles,25).toFixed(1)} / 25.0 miles`;
-    if(name==='Ember Aura') return `${Math.min(snapshot.totalXP,5000).toLocaleString()} / 5,000 XP`;
+    if(name==='Iron Initiate') return `${Math.min(snapshot.workoutCount,u.ironInitiate.target)} / ${u.ironInitiate.target} workout`;
+    if(name==='The Relentless') return `${Math.min(snapshot.streakDays,u.relentless.target)} / ${u.relentless.target} day streak`;
+    if(name==='The Restored') return `${Math.min(snapshot.recoveryCount,u.restored.target)} / ${u.restored.target} recovery protocols`;
+    if(name==='Forged Helm') return `${Math.min(snapshot.workoutCount,u.forgedHelm.target)} / ${u.forgedHelm.target} workouts`;
+    if(name==='Titan Plate') return `${Math.min(Math.round(snapshot.totalVolume),u.titanPlate.target).toLocaleString()} / ${u.titanPlate.target.toLocaleString()} lb`;
+    if(name==='Roadrunner Greaves') return `${Math.min(snapshot.lifetimeMiles,u.roadrunnerGreaves.target).toFixed(1)} / ${u.roadrunnerGreaves.target.toFixed(1)} miles`;
+    if(name==='Ember Aura') return `${Math.min(snapshot.totalXP,u.emberAura.target).toLocaleString()} / ${u.emberAura.target.toLocaleString()} XP`;
     return 'Requirement hidden';
   };
   const unlocked=items.filter(i=>stateFor(i.name)==='unlocked').length;

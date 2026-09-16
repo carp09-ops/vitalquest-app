@@ -22,8 +22,27 @@ const EMPTY:ProgressionSnapshot={
 };
 
 export function useProgressionSnapshot(){
-  const db=useSQLiteContext();const [snapshot,setSnapshot]=useState<ProgressionSnapshot>(EMPTY);const [loading,setLoading]=useState(true);
-  const refresh=useCallback(async()=>{try{setSnapshot(await getProgressionSnapshot(db))}finally{setLoading(false)}},[db]);
-  useFocusEffect(useCallback(()=>{let active=true;getProgressionSnapshot(db).then(next=>{if(active)setSnapshot(next)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[db]));
-  return{snapshot,loading,refresh};
+  const db=useSQLiteContext();
+  const [snapshot,setSnapshot]=useState<ProgressionSnapshot>(EMPTY);
+  const [loading,setLoading]=useState(true);
+  const [refreshing,setRefreshing]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+
+  const refresh=useCallback(async()=>{
+    setRefreshing(true);setError(null);
+    try{setSnapshot(await getProgressionSnapshot(db))}
+    catch(err){setError(err instanceof Error?err.message:'Unable to refresh progression right now.')}
+    finally{setLoading(false);setRefreshing(false)}
+  },[db]);
+
+  useFocusEffect(useCallback(()=>{
+    let active=true;setError(null);
+    getProgressionSnapshot(db)
+      .then(next=>{if(active)setSnapshot(next)})
+      .catch(err=>{if(active)setError(err instanceof Error?err.message:'Unable to load progression right now.')})
+      .finally(()=>{if(active)setLoading(false)});
+    return()=>{active=false};
+  },[db]));
+
+  return{snapshot,loading,refreshing,error,refresh};
 }

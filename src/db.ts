@@ -1,4 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { CustomWorkoutTemplate, DEFAULT_EQUIPMENT, EquipmentId } from './trainingPreferences';
 
 export async function migrateDb(db: SQLiteDatabase) {
   await db.execAsync(`
@@ -59,6 +60,20 @@ export async function migrateDb(db: SQLiteDatabase) {
       FOREIGN KEY (session_id) REFERENCES workout_sessions(id) ON DELETE SET NULL
     );
 
+    CREATE TABLE IF NOT EXISTS app_preferences (
+      key TEXT PRIMARY KEY NOT NULL,
+      value_json TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS custom_workouts (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      exercises_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS sync_outbox (
       id TEXT PRIMARY KEY NOT NULL,
       entity_type TEXT NOT NULL,
@@ -89,6 +104,7 @@ type BaseSession = {
   totalXP: number;
   strengthXP?: number;
   attributeGains?: AttributeGain[];
+  syncDetails?: Record<string, unknown>;
 };
 
 async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
@@ -141,7 +157,10 @@ async function writeSessionBase(db: SQLiteDatabase, input: BaseSession) {
     completedAt: input.completedAt,
     templateId: input.templateId,
     totalXP: input.totalXP,
+    durationMinutes: input.durationMinutes,
+    totalVolume: input.totalVolume,
     attributeGains,
+    ...input.syncDetails,
   });
 
   await db.runAsync(
@@ -172,8 +191,7 @@ export async function saveCompletedWorkout(
   }
 ) {
   await db.withTransactionAsync(async () => {
-    await writeSessionBase(db, input);
-
+    await writeSessionBase(db, { ...input, syncDetails: { ...input.syncDetails, sets: input.sets } });
     for (const set of input.sets) {
       await db.runAsync(
         `INSERT INTO exercise_sets
@@ -202,7 +220,15 @@ export async function saveCompletedEnduranceSession(
   }
 ) {
   await db.withTransactionAsync(async () => {
-    await writeSessionBase(db, input);
+    await writeSessionBase(db, {
+      ...input,
+      syncDetails: {
+        ...input.syncDetails,
+        distanceMiles: input.distanceMiles,
+        avgPaceSeconds: input.avgPaceSeconds,
+        activityType: input.activityType ?? 'run',
+      },
+    });
     await db.runAsync(
       `INSERT INTO endurance_sessions
        (id, session_id, distance_miles, duration_minutes, avg_pace_seconds, activity_type, created_at)
@@ -218,17 +244,59 @@ export async function saveCompletedEnduranceSession(
   });
 }
 
-export async function getLifetimeXP(db: SQLiteDatabase) {
-  const row = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) AS total FROM xp_events`
+export async function getEquipmentProfile(db: SQLiteDatabase): Promise<EquipmentId[]> {
+  const row = await db.getFirstAsync<{ value_json:string }>(`SELECT value_json FROM app_preferences WHERE key='equipment_profile' LIMIT 1`);
+  if (!row?.value_json) return DEFAULT_EQUIPMENT;
+  try {
+    const parsed = JSON.parse(row.value_json);
+    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_EQUIPMENT;
+  } catch {
+    return DEFAULT_EQUIPMENT;
+  }
+}
+
+export async function saveEquipmentProfile(db: SQLiteDatabase, equipment: EquipmentId[]) {
+  const now = new Date().toISOString();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO app_preferences (key, value_json, updated_at) VALUES (?, ?, ?)`,
+    'equipment_profile',
+    JSON.stringify(equipment),
+    now
   );
+}
+
+export async function getCustomWorkouts(db: SQLiteDatabase): Promise<CustomWorkoutTemplate[]> {
+  const rows = await db.getAllAsync<{id:string;name:string;exercises_json:string;created_at:string}>(`SELECT id, name, exercises_json, created_at FROM custom_workouts ORDER BY updated_at DESC`);
+  return rows.map(row => ({
+    id: row.id,
+    name: row.name,
+    createdAt: row.created_at,
+    exercises: JSON.parse(row.exercises_json || '[]'),
+  }));
+}
+
+export async function saveCustomWorkout(db: SQLiteDatabase, workout: CustomWorkoutTemplate) {
+  const now = new Date().toISOString();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO custom_workouts (id, name, exercises_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+    workout.id,
+    workout.name,
+    JSON.stringify(workout.exercises),
+    workout.createdAt || now,
+    now
+  );
+}
+
+export async function deleteCustomWorkout(db: SQLiteDatabase, id: string) {
+  await db.runAsync(`DELETE FROM custom_workouts WHERE id = ?`, id);
+}
+
+export async function getLifetimeXP(db: SQLiteDatabase) {
+  const row = await db.getFirstAsync<{ total: number }>(`SELECT COALESCE(SUM(amount), 0) AS total FROM xp_events`);
   return row?.total ?? 0;
 }
 
 export async function getLifetimeAttributeXP(db: SQLiteDatabase, attribute: string) {
-  const row = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) AS total FROM attribute_events WHERE attribute = ?`,
-    attribute
-  );
+  const row = await db.getFirstAsync<{ total: number }>(`SELECT COALESCE(SUM(amount), 0) AS total FROM attribute_events WHERE attribute = ?`, attribute);
   return row?.total ?? 0;
 }

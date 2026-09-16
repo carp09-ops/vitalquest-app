@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
-type WebStore = { workout_sessions:any[]; exercise_sets:any[]; endurance_sessions:any[]; xp_events:any[]; attribute_events:any[]; sync_outbox:any[]; app_preferences:any[]; custom_workouts:any[]; };
-const STORAGE_KEY='vitalquest.webdb.v3';
-function emptyStore():WebStore{return{workout_sessions:[],exercise_sets:[],endurance_sessions:[],xp_events:[],attribute_events:[],sync_outbox:[],app_preferences:[],custom_workouts:[]}}
-function loadStore():WebStore{if(typeof window==='undefined')return emptyStore();try{const raw=window.localStorage.getItem(STORAGE_KEY)??window.localStorage.getItem('vitalquest.webdb.v2')??window.localStorage.getItem('vitalquest.webdb.v1');return raw?{...emptyStore(),...JSON.parse(raw)}:emptyStore()}catch{return emptyStore()}}
+type WebStore = { workout_sessions:any[]; exercise_sets:any[]; endurance_sessions:any[]; xp_events:any[]; attribute_events:any[]; session_verification:any[]; sync_outbox:any[]; app_preferences:any[]; custom_workouts:any[]; };
+const STORAGE_KEY='vitalquest.webdb.v4';
+function emptyStore():WebStore{return{workout_sessions:[],exercise_sets:[],endurance_sessions:[],xp_events:[],attribute_events:[],session_verification:[],sync_outbox:[],app_preferences:[],custom_workouts:[]}}
+function loadStore():WebStore{if(typeof window==='undefined')return emptyStore();try{const raw=window.localStorage.getItem(STORAGE_KEY)??window.localStorage.getItem('vitalquest.webdb.v3')??window.localStorage.getItem('vitalquest.webdb.v2')??window.localStorage.getItem('vitalquest.webdb.v1');return raw?{...emptyStore(),...JSON.parse(raw)}:emptyStore()}catch{return emptyStore()}}
 function persistStore(store:WebStore){if(typeof window!=='undefined')window.localStorage.setItem(STORAGE_KEY,JSON.stringify(store))}
 function normalize(sql:string){return sql.replace(/\s+/g,' ').trim().toLowerCase()}
 
@@ -16,6 +16,7 @@ function createWebDb(){return{
     else if(normalized.includes('insert into endurance_sessions'))store.endurance_sessions.push({id:params[0],session_id:params[1],distance_miles:params[2],duration_minutes:params[3],avg_pace_seconds:params[4],activity_type:params[5],created_at:params[6]});
     else if(normalized.includes('insert into xp_events'))store.xp_events.push({id:params[0],session_id:params[1],amount:params[2],reason:params[3],created_at:params[4]});
     else if(normalized.includes('insert into attribute_events'))store.attribute_events.push({id:params[0],session_id:params[1],attribute:params[2],amount:params[3],reason:params[4],created_at:params[5]});
+    else if(normalized.includes('insert into session_verification'))store.session_verification.push({session_id:params[0],raw_xp:params[1],awarded_xp:params[2],withheld_xp:params[3],confidence:params[4],multiplier:params[5],tier:params[6],evidence_json:params[7],reasons_json:params[8],created_at:params[9]});
     else if(normalized.includes('insert into sync_outbox'))store.sync_outbox.push({id:params[0],entity_type:params[1],entity_id:params[2],operation:params[3],payload_json:params[4],status:'pending',retry_count:0,created_at:params[5]});
     else if(normalized.includes('insert or replace into app_preferences')){const next={key:params[0],value_json:params[1],updated_at:params[2]};store.app_preferences=store.app_preferences.filter(row=>row.key!==next.key);store.app_preferences.push(next);}
     else if(normalized.includes('insert or replace into custom_workouts')){const next={id:params[0],name:params[1],exercises_json:params[2],created_at:params[3],updated_at:params[4]};store.custom_workouts=store.custom_workouts.filter(row=>row.id!==next.id);store.custom_workouts.push(next);}
@@ -32,6 +33,7 @@ function createWebDb(){return{
     if(normalized.includes('sum(distance_miles)')&&normalized.includes('from endurance_sessions')){let rows=store.endurance_sessions;if(normalized.includes('created_at >= ?'))rows=rows.filter(row=>row.created_at>=params[0]);return{total:rows.reduce((sum,row)=>sum+Number(row.distance_miles||0),0)} as T}
     if(normalized.includes('from xp_events'))return{total:store.xp_events.reduce((sum,row)=>sum+Number(row.amount||0),0)} as T;
     if(normalized.includes('from attribute_events')){const literal=normalized.match(/attribute\s*=\s*['"]([^'"]+)['"]/i)?.[1];const attribute=params[0]??literal;return{total:store.attribute_events.filter(row=>row.attribute===attribute).reduce((sum,row)=>sum+Number(row.amount||0),0)} as T}
+    if(normalized.includes('from session_verification')&&normalized.includes('order by created_at desc')){const row=[...store.session_verification].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))[0];return(row??null) as T|null}
     return null;
   },
   async getAllAsync<T=any>(sql:string,...params:any[]):Promise<T[]>{const store=loadStore();const normalized=normalize(sql);
@@ -40,6 +42,7 @@ function createWebDb(){return{
     if(normalized.includes('from workout_sessions')&&normalized.includes('order by completed_at desc')&&normalized.includes('limit 12'))return [...store.workout_sessions].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,12) as T[];
     if(normalized.includes('from exercise_sets')&&normalized.includes('order by completed_at desc'))return [...store.exercise_sets].sort((a,b)=>String(b.completed_at).localeCompare(String(a.completed_at))).slice(0,240) as T[];
     if(normalized.includes('from custom_workouts'))return [...store.custom_workouts].sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at))) as T[];
+    if(normalized.includes('from session_verification'))return [...store.session_verification].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))) as T[];
     return[];
   }
 }}

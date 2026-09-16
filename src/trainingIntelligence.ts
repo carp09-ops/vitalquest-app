@@ -1,63 +1,29 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { EXERCISE_CATALOG } from './trainingPreferences';
 
-export type RecentTrainingSession = {
-  templateId: string;
-  name: string;
-  totalXP: number;
-  totalVolume: number;
-  durationMinutes: number;
-  completedAt: string;
-};
-
-export type ExerciseInsight = {
-  exerciseId: string;
-  name: string;
-  sessions: number;
-  topWeight: number;
-  bestVolumeSet: number;
-  recentVolume: number;
-  previousVolume: number;
-  volumeTrendPct: number;
-  lastWeight: number;
-  lastReps: number;
-  estimatedOneRepMax: number;
-  lastPerformedAt: string | null;
-};
-
+export type RecentTrainingSession = {templateId:string;name:string;totalXP:number;totalVolume:number;durationMinutes:number;completedAt:string;};
+export type ExerciseInsight = {exerciseId:string;name:string;sessions:number;topWeight:number;bestVolumeSet:number;recentVolume:number;previousVolume:number;volumeTrendPct:number;lastWeight:number;lastReps:number;estimatedOneRepMax:number;lastPerformedAt:string|null;};
+export type PerformanceTrend='IMPROVING'|'STABLE'|'REGRESSING'|'LIMITED DATA';
 export type TrainingIntelligence = {
-  recent: RecentTrainingSession[];
-  averageXP: number;
-  averageDuration: number;
-  averageVolume: number;
-  generatedSessions: number;
-  recentResistanceMix: string[];
-  exerciseInsights: ExerciseInsight[];
-  strongestTrend: ExerciseInsight | null;
-  needsAttention: ExerciseInsight | null;
-  recentPrs: number;
-  recentSetCount: number;
-  fatigueScore: number;
-  deloadRecommended: boolean;
-  deloadReason: string;
+  recent:RecentTrainingSession[];averageXP:number;averageDuration:number;averageVolume:number;generatedSessions:number;recentResistanceMix:string[];exerciseInsights:ExerciseInsight[];strongestTrend:ExerciseInsight|null;needsAttention:ExerciseInsight|null;recentPrs:number;recentSetCount:number;fatigueScore:number;deloadRecommended:boolean;deloadReason:string;
+  muscleExposure:Array<{muscle:string;sets:number}>;consecutiveHardDays:number;performanceTrend:PerformanceTrend;performanceTrendPct:number;
 };
-
-export const EMPTY_INTELLIGENCE: TrainingIntelligence = {
-  recent: [],averageXP:0,averageDuration:0,averageVolume:0,generatedSessions:0,recentResistanceMix:[],exerciseInsights:[],strongestTrend:null,needsAttention:null,recentPrs:0,recentSetCount:0,fatigueScore:0,deloadRecommended:false,deloadReason:'Not enough training history yet to assess fatigue.',
-};
+export const EMPTY_INTELLIGENCE:TrainingIntelligence={recent:[],averageXP:0,averageDuration:0,averageVolume:0,generatedSessions:0,recentResistanceMix:[],exerciseInsights:[],strongestTrend:null,needsAttention:null,recentPrs:0,recentSetCount:0,fatigueScore:0,deloadRecommended:false,deloadReason:'Not enough training history yet to assess fatigue.',muscleExposure:[],consecutiveHardDays:0,performanceTrend:'LIMITED DATA',performanceTrendPct:0};
 
 function isResistance(id:string){return ['push','pull','legs'].includes(id)||id.startsWith('ai-')||id.startsWith('custom-')}
+function dayKey(value:string){const d=new Date(value);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}
+function baseMuscle(exerciseId:string){const muscle=EXERCISE_CATALOG.find(item=>item.id===exerciseId)?.muscle?.split('·')[0]?.trim();return muscle||'Other'}
 
-export async function getTrainingIntelligence(db: SQLiteDatabase): Promise<TrainingIntelligence> {
-  const sessionRows = await db.getAllAsync<{template_id:string|null;name:string;total_xp:number;total_volume:number;duration_minutes:number;completed_at:string}>(`SELECT template_id, name, total_xp, total_volume, duration_minutes, completed_at FROM workout_sessions ORDER BY completed_at DESC LIMIT 12`);
+export async function getTrainingIntelligence(db:SQLiteDatabase):Promise<TrainingIntelligence>{
+  const sessionRows=await db.getAllAsync<{template_id:string|null;name:string;total_xp:number;total_volume:number;duration_minutes:number;completed_at:string}>(`SELECT template_id, name, total_xp, total_volume, duration_minutes, completed_at FROM workout_sessions ORDER BY completed_at DESC LIMIT 12`);
   const recent=sessionRows.map(row=>({templateId:row.template_id??'unknown',name:row.name,totalXP:Number(row.total_xp??0),totalVolume:Number(row.total_volume??0),durationMinutes:Number(row.duration_minutes??0),completedAt:row.completed_at}));
   const setRows=await db.getAllAsync<{session_id:string;exercise_id:string;exercise_name:string;weight:number;reps:number;is_pr:number;completed_at:string}>(`SELECT session_id, exercise_id, exercise_name, weight, reps, is_pr, completed_at FROM exercise_sets ORDER BY completed_at DESC LIMIT 240`);
-  const grouped=new Map<string,typeof setRows>();
-  for(const row of setRows){const current=grouped.get(row.exercise_id)??[];current.push(row);grouped.set(row.exercise_id,current)}
-  const exerciseInsights=Array.from(grouped.entries()).map(([exerciseId,sets])=>{
-    const sessionCount=new Set(sets.map(set=>set.session_id)).size;const volumes=sets.map(set=>Number(set.weight||0)*Number(set.reps||0));const recentSets=volumes.slice(0,Math.min(6,volumes.length));const previousSets=volumes.slice(6,12);const recentVolume=recentSets.length?recentSets.reduce((a,b)=>a+b,0)/recentSets.length:0;const previousVolume=previousSets.length?previousSets.reduce((a,b)=>a+b,0)/previousSets.length:recentVolume;const volumeTrendPct=previousVolume>0?((recentVolume-previousVolume)/previousVolume)*100:0;const lastWeight=Number(sets[0]?.weight??0);const lastReps=Number(sets[0]?.reps??0);const oneRmCandidates=sets.filter(set=>Number(set.weight)>0&&Number(set.reps)>0).map(set=>Number(set.weight)*(1+Number(set.reps)/30));
-    return{exerciseId,name:sets[0]?.exercise_name??exerciseId,sessions:sessionCount,topWeight:Math.max(...sets.map(set=>Number(set.weight||0)),0),bestVolumeSet:Math.max(...volumes,0),recentVolume:Math.round(recentVolume),previousVolume:Math.round(previousVolume),volumeTrendPct:Math.round(volumeTrendPct),lastWeight,lastReps,estimatedOneRepMax:Math.round(Math.max(...oneRmCandidates,0)),lastPerformedAt:sets[0]?.completed_at??null};
-  }).sort((a,b)=>b.sessions-a.sessions||b.recentVolume-a.recentVolume);
-  const eligible=exerciseInsights.filter(item=>item.sessions>=2);const strongestTrend=[...eligible].sort((a,b)=>b.volumeTrendPct-a.volumeTrendPct)[0]??exerciseInsights[0]??null;const needsAttention=[...eligible].sort((a,b)=>a.volumeTrendPct-b.volumeTrendPct)[0]??null;const count=Math.max(1,recent.length);
-  const resistance=recent.filter(row=>isResistance(row.templateId)&&row.totalVolume>0);const newest=resistance.slice(0,3);const prior=resistance.slice(3,6);const avg=(rows:RecentTrainingSession[])=>rows.length?rows.reduce((sum,row)=>sum+row.totalVolume,0)/rows.length:0;const newestAvg=avg(newest);const priorAvg=avg(prior);const sessionDeclinePct=priorAvg>0?((newestAvg-priorAvg)/priorAvg)*100:0;const decliningExercises=eligible.filter(item=>item.volumeTrendPct<=-8).length;let fatigueScore=0;if(resistance.length>=4)fatigueScore+=20;if(sessionDeclinePct<=-8)fatigueScore+=30;if(sessionDeclinePct<=-15)fatigueScore+=15;if(decliningExercises>=2)fatigueScore+=25;if(decliningExercises>=3)fatigueScore+=10;fatigueScore=Math.min(100,fatigueScore);const deloadRecommended=fatigueScore>=60;const deloadReason=deloadRecommended?`Recent resistance output is ${Math.abs(Math.round(sessionDeclinePct))}% lower than the prior block with ${decliningExercises} exercise trend${decliningExercises===1?'':'s'} declining. Reduce load/volume and rebuild quality.`:resistance.length<4?'More resistance history is needed before VitalQuest will call for a deload.':sessionDeclinePct<0?`Output is down ${Math.abs(Math.round(sessionDeclinePct))}% from the prior block, but the signal is not strong enough for a deload.`:'Recent resistance output is stable or improving; no deload signal is active.';
-  return{recent,averageXP:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.totalXP,0)/count):0,averageDuration:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.durationMinutes,0)/count):0,averageVolume:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.totalVolume,0)/count):0,generatedSessions:recent.filter(row=>row.templateId.startsWith('ai-')).length,recentResistanceMix:recent.filter(row=>isResistance(row.templateId)).slice(0,5).map(row=>row.templateId),exerciseInsights,strongestTrend,needsAttention,recentPrs:setRows.slice(0,60).filter(row=>Number(row.is_pr)===1).length,recentSetCount:Math.min(setRows.length,60),fatigueScore,deloadRecommended,deloadReason};
+  const grouped=new Map<string,typeof setRows>();for(const row of setRows){const current=grouped.get(row.exercise_id)??[];current.push(row);grouped.set(row.exercise_id,current)}
+  const exerciseInsights=Array.from(grouped.entries()).map(([exerciseId,sets])=>{const sessionCount=new Set(sets.map(set=>set.session_id)).size;const volumes=sets.map(set=>Number(set.weight||0)*Number(set.reps||0));const recentSets=volumes.slice(0,Math.min(6,volumes.length));const previousSets=volumes.slice(6,12);const recentVolume=recentSets.length?recentSets.reduce((a,b)=>a+b,0)/recentSets.length:0;const previousVolume=previousSets.length?previousSets.reduce((a,b)=>a+b,0)/previousSets.length:recentVolume;const volumeTrendPct=previousVolume>0?((recentVolume-previousVolume)/previousVolume)*100:0;const lastWeight=Number(sets[0]?.weight??0);const lastReps=Number(sets[0]?.reps??0);const oneRmCandidates=sets.filter(set=>Number(set.weight)>0&&Number(set.reps)>0).map(set=>Number(set.weight)*(1+Number(set.reps)/30));return{exerciseId,name:sets[0]?.exercise_name??exerciseId,sessions:sessionCount,topWeight:Math.max(...sets.map(set=>Number(set.weight||0)),0),bestVolumeSet:Math.max(...volumes,0),recentVolume:Math.round(recentVolume),previousVolume:Math.round(previousVolume),volumeTrendPct:Math.round(volumeTrendPct),lastWeight,lastReps,estimatedOneRepMax:Math.round(Math.max(...oneRmCandidates,0)),lastPerformedAt:sets[0]?.completed_at??null};}).sort((a,b)=>b.sessions-a.sessions||b.recentVolume-a.recentVolume);
+  const eligible=exerciseInsights.filter(item=>item.sessions>=2);const strongestTrend=[...eligible].sort((a,b)=>b.volumeTrendPct-a.volumeTrendPct)[0]??exerciseInsights[0]??null;const needsAttention=[...eligible].sort((a,b)=>a.volumeTrendPct-b.volumeTrendPct)[0]??null;
+  const count=Math.max(1,recent.length);const resistance=recent.filter(row=>isResistance(row.templateId)&&row.totalVolume>0);const newest=resistance.slice(0,3);const prior=resistance.slice(3,6);const avg=(rows:RecentTrainingSession[])=>rows.length?rows.reduce((sum,row)=>sum+row.totalVolume,0)/rows.length:0;const newestAvg=avg(newest);const priorAvg=avg(prior);const sessionDeclinePct=priorAvg>0?((newestAvg-priorAvg)/priorAvg)*100:0;const decliningExercises=eligible.filter(item=>item.volumeTrendPct<=-8).length;let fatigueScore=0;if(resistance.length>=4)fatigueScore+=20;if(sessionDeclinePct<=-8)fatigueScore+=30;if(sessionDeclinePct<=-15)fatigueScore+=15;if(decliningExercises>=2)fatigueScore+=25;if(decliningExercises>=3)fatigueScore+=10;fatigueScore=Math.min(100,fatigueScore);const deloadRecommended=fatigueScore>=60;const deloadReason=deloadRecommended?`Recent resistance output is ${Math.abs(Math.round(sessionDeclinePct))}% lower than the prior block with ${decliningExercises} exercise trend${decliningExercises===1?'':'s'} declining. Reduce load/volume and rebuild quality.`:resistance.length<4?'More resistance history is needed before VitalQuest will call for a deload.':sessionDeclinePct<0?`Output is down ${Math.abs(Math.round(sessionDeclinePct))}% from the prior block, but the signal is not strong enough for a deload.`:'Recent resistance output is stable or improving; no deload signal is active.';
+  const exposureCutoff=Date.now()-7*864e5;const exposure=new Map<string,number>();for(const row of setRows){if(new Date(row.completed_at).getTime()<exposureCutoff)continue;const muscle=baseMuscle(row.exercise_id);exposure.set(muscle,(exposure.get(muscle)??0)+1)}const muscleExposure=[...exposure.entries()].map(([muscle,sets])=>({muscle,sets})).sort((a,b)=>b.sets-a.sets);
+  const hardDays=[...new Set(recent.filter(row=>row.templateId!=='recovery'&&(row.totalVolume>0||row.durationMinutes>=25)).map(row=>dayKey(row.completedAt)))];let consecutiveHardDays=0;if(hardDays.length){let cursor=new Date();cursor.setHours(12,0,0,0);if(!hardDays.includes(dayKey(cursor.toISOString())))cursor.setDate(cursor.getDate()-1);while(hardDays.includes(dayKey(cursor.toISOString()))){consecutiveHardDays++;cursor.setDate(cursor.getDate()-1)}}
+  const performanceTrendPct=Math.round(sessionDeclinePct);const performanceTrend:PerformanceTrend=resistance.length<4?'LIMITED DATA':performanceTrendPct>=8?'IMPROVING':performanceTrendPct<=-8?'REGRESSING':'STABLE';
+  return{recent,averageXP:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.totalXP,0)/count):0,averageDuration:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.durationMinutes,0)/count):0,averageVolume:recent.length?Math.round(recent.reduce((sum,row)=>sum+row.totalVolume,0)/count):0,generatedSessions:recent.filter(row=>row.templateId.startsWith('ai-')).length,recentResistanceMix:recent.filter(row=>isResistance(row.templateId)).slice(0,5).map(row=>row.templateId),exerciseInsights,strongestTrend,needsAttention,recentPrs:setRows.slice(0,60).filter(row=>Number(row.is_pr)===1).length,recentSetCount:Math.min(setRows.length,60),fatigueScore,deloadRecommended,deloadReason,muscleExposure,consecutiveHardDays,performanceTrend,performanceTrendPct};
 }

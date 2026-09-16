@@ -3,10 +3,14 @@ import React from 'react';
 import ActiveWorkoutV2 from '../src/ActiveWorkoutV2';
 import EnduranceWorkoutV2 from '../src/EnduranceWorkoutV2';
 import RecoveryEncounterV2 from '../src/RecoveryEncounterV2';
+import WorldBackdrop from '../src/WorldBackdrop';
 
 export default function WorkoutScreen() {
   const params = useLocalSearchParams<{ templateId?: string }>();
-  if (params.templateId === 'run') return <EnduranceWorkoutV2 />;
-  if (params.templateId === 'recovery') return <RecoveryEncounterV2 />;
-  return <ActiveWorkoutV2 />;
+  const encounter = params.templateId === 'run'
+    ? <EnduranceWorkoutV2 />
+    : params.templateId === 'recovery'
+      ? <RecoveryEncounterV2 />
+      : <ActiveWorkoutV2 />;
+  return <WorldBackdrop scene="train">{encounter}</WorldBackdrop>;
 }

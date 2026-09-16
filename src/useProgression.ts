@@ -9,7 +9,8 @@ const EMPTY:ProgressionSnapshot={
   workoutCount:0,resistanceWorkoutCount:0,enduranceCount:0,recoveryCount:0,
   totalVolume:0,lifetimeMiles:0,prCount:0,streakDays:0,
   thisWeekWorkouts:0,thisWeekResistanceWorkouts:0,thisWeekEnduranceSessions:0,thisWeekRecoverySessions:0,
-  thisWeekVolume:0,thisWeekMiles:0,thisWeekXP:0,lastWorkoutAt:null,
+  thisWeekPushWorkouts:0,thisWeekPullWorkouts:0,thisWeekLegWorkouts:0,
+  thisWeekVolume:0,thisWeekMiles:0,thisWeekXP:0,lastWorkoutAt:null,lastTemplateId:null,
   quests:{
     ironWeek:{progress:0,target:3,complete:false},
     fiveTonTrial:{progress:0,target:10000,complete:false},

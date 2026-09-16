@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { IconArt, VQIconName } from '../../src/IconArt';
 import { useVitalTheme } from '../../src/ThemeProvider';
 import { useHeroArchetype } from '../../src/useHeroArchetype';
@@ -29,20 +29,23 @@ function NavIcon({ name, focused, accent }: { name: keyof typeof NAV; focused: b
 export default function TabLayout() {
   const { theme } = useVitalTheme();
   const { archetype } = useHeroArchetype();
+  const { width } = useWindowDimensions();
+  const landscapeDock = width >= 900;
   const t = theme.tokens;
   const accent = paletteForArchetype(archetype).primary;
 
   return (
     <View style={[styles.world,{backgroundColor:'#05070A'}]}>
       <WorldArt archetype={archetype} strength="soft" position="top" />
-      <View pointerEvents="none" style={styles.ambientTop}/>
-      <View pointerEvents="none" style={styles.ambientBottom}/>
+      <View pointerEvents="none" style={[styles.ambientTop,landscapeDock&&styles.ambientTopWide]}/>
+      <View pointerEvents="none" style={[styles.ambientBottom,landscapeDock&&styles.ambientBottomWide]}/>
       <Tabs
         screenOptions={{
           headerShown: false,
           sceneStyle: { backgroundColor: 'transparent' },
           tabBarStyle: [
             styles.tabBar,
+            landscapeDock&&styles.tabBarWide,
             { backgroundColor: t.navBackground, borderColor: `${t.text}18` },
             Platform.OS === 'web'
               ? ({ boxShadow: '0 20px 64px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.065)', backdropFilter: 'blur(34px) saturate(1.08)' } as any)
@@ -66,13 +69,16 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   world:{flex:1,overflow:'hidden'},
-  ambientTop:{position:'absolute',top:0,left:0,right:0,height:220,backgroundColor:'rgba(5,7,10,.10)'},
-  ambientBottom:{position:'absolute',left:0,right:0,bottom:0,height:260,backgroundColor:'rgba(5,7,10,.54)'},
+  ambientTop:{position:'absolute',top:0,left:0,right:0,height:220,backgroundColor:'rgba(5,7,10,.08)'},
+  ambientTopWide:{height:170,backgroundColor:'rgba(5,7,10,.04)'},
+  ambientBottom:{position:'absolute',left:0,right:0,bottom:0,height:260,backgroundColor:'rgba(5,7,10,.50)'},
+  ambientBottomWide:{height:210,backgroundColor:'rgba(5,7,10,.40)'},
   tabBar: {
     position: 'absolute', left: 14, right: 14, bottom: 12, height: 90,
     borderWidth: 1, borderTopWidth: 1, borderRadius: 26,
     paddingTop: 8, paddingBottom: 10, overflow: 'hidden',
   },
+  tabBarWide:{left:'50%',right:undefined,width:680,marginLeft:-340,height:84,bottom:16,borderRadius:24},
   item: { paddingTop: 0 },
   label: { fontSize: 8.25, fontWeight: '900', letterSpacing: 1.15, textTransform: 'uppercase', marginTop: 0 },
   iconShell: {

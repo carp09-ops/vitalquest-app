@@ -16,6 +16,8 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="VitalQuest" />
         <link rel="manifest" href="/vitalquest-app/manifest.json" />
+        <link rel="apple-touch-icon" href="/vitalquest-app/assets/branding/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/vitalquest-app/assets/branding/icon-192.png" />
         <title>VitalQuest</title>
         <ScrollViewStyleReset />
       </head>

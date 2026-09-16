@@ -131,14 +131,16 @@ function formTierForLevel(level: number): HeroTier {
 export function nextHeroFormMilestone(level: number, totalXP: number, archetype: HeroArchetype) {
   const currentTier = formTierForLevel(level);
   if (currentTier >= 5) return null;
-  const targetLevel = FORM_LEVELS[currentTier];
+  const targetLevel = (FORM_LEVELS as readonly number[])[currentTier];
+  const nextTitle = (HERO_ARCHETYPES[archetype].tierTitles as readonly string[])[currentTier];
+  if (targetLevel == null || nextTitle == null) return null;
   const targetXP = cumulativeXpForLevel(targetLevel);
   return {
     targetLevel,
     targetXP,
     xpRemaining: Math.max(0, targetXP - totalXP),
     nextTier: (currentTier + 1) as HeroTier,
-    nextTitle: HERO_ARCHETYPES[archetype].tierTitles[currentTier],
+    nextTitle,
   };
 }
 

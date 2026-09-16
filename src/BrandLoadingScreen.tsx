@@ -1,8 +1,7 @@
 import React,{useEffect,useRef} from 'react';
 import { Animated,Easing,ImageBackground,Platform,StyleSheet,Text,View,useWindowDimensions } from 'react-native';
-import { BRAND_LAUNCH_IMAGE } from './brandLaunchAsset';
-import { BRAND_CALIBRATING_IMAGE } from './brandCalibratingAsset';
 import { useReducedMotion } from './Interaction';
+import { VITALQUEST_ART } from './vitalquestArt';
 
 type Variant='launch'|'calibrating';
 
@@ -23,7 +22,7 @@ export default function BrandLoadingScreen({variant='launch',message}:{variant?:
   },[opacity,pulse,reduced,rise]);
   const calibrating=variant==='calibrating';
   return <View style={styles.root} accessibilityRole="progressbar" accessibilityLabel={message??(calibrating?'Calibrating your next session':'Loading VitalQuest')}>
-    <ImageBackground source={{uri:calibrating?BRAND_CALIBRATING_IMAGE:BRAND_LAUNCH_IMAGE}} resizeMode="cover" style={styles.image} imageStyle={styles.imageStyle}>
+    <ImageBackground source={{uri:calibrating?VITALQUEST_ART.brand.calibrating:VITALQUEST_ART.brand.launch}} resizeMode="cover" style={styles.image} imageStyle={styles.imageStyle}>
       <View style={styles.scrim}/>
       <Animated.View style={[styles.content,tablet&&styles.contentTablet,{opacity,transform:[{translateY:rise}]}]}>
         {!calibrating?<><Text style={styles.wordmark}>VITALQUEST</Text><Text style={styles.tagline}>REAL WORK · VISIBLE GROWTH</Text></>:null}

@@ -31,9 +31,9 @@ export type VitalTheme = {
 
 // One product shell. Archetype worlds now live behind translucent premium materials.
 const shell = {
-  background: 'rgba(8,10,13,.76)',
-  surface: 'rgba(17,21,26,.84)',
-  surfaceElevated: 'rgba(32,38,45,.82)',
+  background: 'rgba(8,10,13,.56)',
+  surface: 'rgba(17,21,26,.76)',
+  surfaceElevated: 'rgba(32,38,45,.72)',
   border: shellPalette.border,
   text: shellPalette.ivory,
   muted: shellPalette.steelLight,
@@ -47,8 +47,8 @@ const shell = {
   agility: '#65AEE6',
   power: '#A58BD2',
   discipline: '#D6B65C',
-  navBackground: 'rgba(8,10,13,.82)',
-  heroSurface: 'rgba(23,28,34,.76)',
+  navBackground: 'rgba(8,10,13,.78)',
+  heroSurface: 'rgba(23,28,34,.68)',
 } as const;
 
 export const themes: Record<ThemeId, VitalTheme> = {

@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { levelProgress } from './gameEngine';
-import { progressionRules } from './progressionRules';
+import { deriveUnlockState, progressionRules } from './progressionRules';
 
 export type ProgressionSnapshot = {
   totalXP:number;level:number;levelCurrentXP:number;levelNeededXP:number;levelRatio:number;
@@ -24,9 +24,10 @@ export async function getProgressionSnapshot(db:SQLiteDatabase):Promise<Progress
   ]);
   const resistanceWorkoutCount=Math.max(0,workoutCount-enduranceCount-recoveryCount);const thisWeekResistanceWorkouts=Math.max(0,thisWeekWorkouts-thisWeekEnduranceSessions-thisWeekRecoverySessions);const last=await db.getFirstAsync<{completed_at:string}>(`SELECT completed_at FROM workout_sessions ORDER BY completed_at DESC LIMIT 1`);
   const completedRows=await db.getAllAsync<{completed_at:string}>(`SELECT completed_at FROM workout_sessions ORDER BY completed_at DESC LIMIT 90`);const daySet=new Set(completedRows.map(row=>localDayKey(row.completed_at)));let streakDays=0;const cursor=new Date();cursor.setHours(12,0,0,0);if(!daySet.has(localDayKey(cursor)))cursor.setDate(cursor.getDate()-1);while(daySet.has(localDayKey(cursor))){streakDays+=1;cursor.setDate(cursor.getDate()-1)}
-  const level=levelProgress(totalXP);const q=progressionRules.quests;const u=progressionRules.unlocks;
+  const level=levelProgress(totalXP);const q=progressionRules.quests;
+  const unlocks=deriveUnlockState({workoutCount,streakDays,totalVolume,lifetimeMiles,recoveryCount,totalXP});
   return {totalXP,level:level.level,levelCurrentXP:level.current,levelNeededXP:level.needed,levelRatio:level.ratio,strengthXP,staminaXP,agilityXP,vitalityXP,disciplineXP,workoutCount,resistanceWorkoutCount,enduranceCount,recoveryCount,totalVolume,lifetimeMiles,prCount,streakDays,thisWeekWorkouts,thisWeekResistanceWorkouts,thisWeekEnduranceSessions,thisWeekRecoverySessions,thisWeekVolume,thisWeekMiles,thisWeekXP,lastWorkoutAt:last?.completed_at??null,
     quests:{ironWeek:{progress:Math.min(thisWeekResistanceWorkouts,q.ironWeek.target),target:q.ironWeek.target,complete:thisWeekResistanceWorkouts>=q.ironWeek.target},fiveTonTrial:{progress:Math.min(thisWeekVolume,q.fiveTonTrial.target),target:q.fiveTonTrial.target,complete:thisWeekVolume>=q.fiveTonTrial.target},longRoad:{progress:Math.min(lifetimeMiles,q.longRoad.target),target:q.longRoad.target,complete:lifetimeMiles>=q.longRoad.target},veteranPath:{progress:Math.min(workoutCount,q.veteranPath.target),target:q.veteranPath.target,complete:workoutCount>=q.veteranPath.target},restorationRitual:{progress:Math.min(recoveryCount,q.restorationRitual.target),target:q.restorationRitual.target,complete:recoveryCount>=q.restorationRitual.target}},
-    unlocks:{ironInitiate:workoutCount>=u.ironInitiate.target,relentless:streakDays>=u.relentless.target,forgedHelm:workoutCount>=u.forgedHelm.target,titanPlate:totalVolume>=u.titanPlate.target,roadrunnerGreaves:lifetimeMiles>=u.roadrunnerGreaves.target,restored:recoveryCount>=u.restored.target,emberAura:totalXP>=u.emberAura.target}
+    unlocks
   };
 }

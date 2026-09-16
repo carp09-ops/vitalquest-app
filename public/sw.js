@@ -1,9 +1,19 @@
-const CACHE_NAME = 'vitalquest-shell-v3';
+const CACHE_NAME = 'vitalquest-shell-v4';
 const APP_ROOT = '/vitalquest-app/';
+const CORE_ASSETS = [
+  APP_ROOT,
+  '/vitalquest-app/manifest.json',
+  '/vitalquest-app/assets/branding/icon-192.png',
+  '/vitalquest-app/assets/branding/apple-touch-icon.png',
+  '/vitalquest-app/art/v1/mythic-world.webp',
+  '/vitalquest-app/art/v1/mythic-hero.webp',
+  '/vitalquest-app/art/v1/training-hall.webp',
+  '/vitalquest-app/art/v1/quest-gate.webp',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(APP_ROOT)).catch(() => undefined)
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).catch(() => undefined)
   );
   self.skipWaiting();
 });

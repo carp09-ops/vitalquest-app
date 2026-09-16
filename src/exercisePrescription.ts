@@ -1,4 +1,5 @@
 import { ExerciseInsight } from './trainingIntelligence';
+import { currentTrainingBlockLoadGuide } from './trainingBlock';
 
 export type LoadPrescription = {
   suggestedWeight: number | null;
@@ -15,7 +16,9 @@ export function prescribeWorkingWeight(args:{
   phaseLabel?:string;
 }):LoadPrescription{
   const {insight,targetReps}=args;
-  const loadMultiplier=Math.max(.65,Math.min(1.1,args.loadMultiplier??1));
+  const active=currentTrainingBlockLoadGuide();
+  const loadMultiplier=Math.max(.65,Math.min(1.1,args.loadMultiplier??active.loadMultiplier));
+  const phaseLabel=args.phaseLabel??active.phaseLabel;
   if(!insight || insight.sessions<1 || insight.estimatedOneRepMax<=0){
     return {suggestedWeight:null,source:'none',rationale:'No logged history yet. Choose a comfortable working load and VitalQuest will calibrate from it.'};
   }
@@ -34,7 +37,7 @@ export function prescribeWorkingWeight(args:{
       : insight.volumeTrendPct<=-8
         ? `with volume trending ${insight.volumeTrendPct}% so load is held conservative`
         : 'with recent volume holding steady';
-  const phaseText=args.phaseLabel&&Math.abs(loadMultiplier-1)>.01?` ${args.phaseLabel} applies a ${Math.round(loadMultiplier*100)}% Arc load guide.`:'';
+  const phaseText=Math.abs(loadMultiplier-1)>.01?` ${phaseLabel} applies a ${Math.round(loadMultiplier*100)}% Arc load guide.`:'';
 
   return {
     suggestedWeight,

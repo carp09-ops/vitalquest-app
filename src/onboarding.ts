@@ -24,6 +24,14 @@ export async function getOnboardingProfile(db:SQLiteDatabase):Promise<Onboarding
 
 export async function isOnboardingComplete(db:SQLiteDatabase){return Boolean(await getOnboardingProfile(db))}
 
+export async function shouldShowOnboarding(db:SQLiteDatabase){
+  if(await isOnboardingComplete(db))return false;
+  const history=await db.getFirstAsync<{count:number}>(`SELECT COUNT(*) AS count FROM workout_sessions`);
+  if(Number(history?.count||0)>0)return false;
+  const configured=await db.getFirstAsync<{count:number}>(`SELECT COUNT(*) AS count FROM app_preferences WHERE key IN ('equipment_profile','hero_archetype','training_block_v1')`);
+  return Number(configured?.count||0)===0;
+}
+
 export async function saveOnboardingProfile(db:SQLiteDatabase,input:Omit<OnboardingProfile,'completedAt'>){
   const profile:OnboardingProfile={...input,completedAt:new Date().toISOString()};
   await db.withTransactionAsync(async()=>{

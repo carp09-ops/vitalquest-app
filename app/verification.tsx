@@ -1,6 +1,7 @@
 import React from 'react';
 import VerificationSetupV2 from '../src/VerificationSetupV2';
+import WorldBackdrop from '../src/WorldBackdrop';
 
 export default function VerificationScreen(){
-  return <VerificationSetupV2/>;
+  return <WorldBackdrop scene="hero"><VerificationSetupV2/></WorldBackdrop>;
 }

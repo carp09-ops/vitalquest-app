@@ -1,18 +1,17 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { migrateDb } from '../src/db';
-import { VitalThemeProvider, useVitalTheme } from '../src/ThemeProvider';
+import { VitalThemeProvider } from '../src/ThemeProvider';
 
 function ThemedStack() {
-  const { theme } = useVitalTheme();
-
   return (
     <SQLiteProvider databaseName="vitalquest.db" onInit={migrateDb}>
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme.tokens.background },
+          contentStyle: { backgroundColor: 'transparent' },
           animation: 'fade',
+          animationDuration: 260,
         }}
       >
         <Stack.Screen name="(tabs)" />

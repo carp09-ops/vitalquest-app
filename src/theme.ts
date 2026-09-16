@@ -1,3 +1,5 @@
+import { shellPalette } from './designSystem';
+
 export type ThemeId = 'mythicForge' | 'celestialPulse' | 'titanCore';
 
 export type VitalTheme = {
@@ -27,34 +29,33 @@ export type VitalTheme = {
   };
 };
 
-// VitalQuest V2 uses one product shell. Legacy theme IDs remain temporarily so
-// older persisted preferences and screens continue to work while hero archetypes
-// replace full-app skins.
+// One product shell. These legacy IDs remain only for backward compatibility
+// while archetypes own character-specific color and art direction.
 const shell = {
-  background: '#0B0D10',
-  surface: '#12161B',
-  surfaceElevated: '#1A2027',
-  border: '#2A3440',
-  text: '#F3F5F7',
-  muted: '#8792A0',
-  accent: '#8FB7D8',
-  accentSoft: '#49667F',
-  secondary: '#AEB8C3',
-  positive: '#4FC38A',
-  danger: '#D86B6B',
-  strength: '#D97A70',
-  stamina: '#65CDA0',
-  agility: '#70AFE3',
+  background: shellPalette.obsidian,
+  surface: shellPalette.graphite,
+  surfaceElevated: shellPalette.slate,
+  border: shellPalette.border,
+  text: shellPalette.ivory,
+  muted: shellPalette.steelLight,
+  accent: shellPalette.champagne,
+  accentSoft: '#70634F',
+  secondary: shellPalette.cloud,
+  positive: '#58C692',
+  danger: '#E36D72',
+  strength: '#E17970',
+  stamina: '#66CDA3',
+  agility: '#65AEE6',
   power: '#A58BD2',
-  discipline: '#D7B767',
-  navBackground: '#0D1116',
-  heroSurface: '#171D24',
+  discipline: '#D6B65C',
+  navBackground: 'rgba(8,10,13,.94)',
+  heroSurface: '#171C22',
 } as const;
 
 export const themes: Record<ThemeId, VitalTheme> = {
-  mythicForge: { id: 'mythicForge', name: 'VitalQuest', tagline: 'Real effort. Visible growth.', flavor: 'Unified shell', tokens: { ...shell } },
-  celestialPulse: { id: 'celestialPulse', name: 'VitalQuest', tagline: 'Real effort. Visible growth.', flavor: 'Unified shell', tokens: { ...shell } },
-  titanCore: { id: 'titanCore', name: 'VitalQuest', tagline: 'Real effort. Visible growth.', flavor: 'Unified shell', tokens: { ...shell } },
+  mythicForge: { id: 'mythicForge', name: 'VitalQuest', tagline: 'Train. Progress. Evolve.', flavor: 'Unified premium shell', tokens: { ...shell } },
+  celestialPulse: { id: 'celestialPulse', name: 'VitalQuest', tagline: 'Train. Progress. Evolve.', flavor: 'Unified premium shell', tokens: { ...shell } },
+  titanCore: { id: 'titanCore', name: 'VitalQuest', tagline: 'Train. Progress. Evolve.', flavor: 'Unified premium shell', tokens: { ...shell } },
 };
 
 export const defaultTheme = themes.mythicForge;

@@ -49,6 +49,52 @@ export const archetypePalettes: Record<HeroArchetype, {
   },
 };
 
+export const archetypeMaterials: Record<HeroArchetype, {
+  commandSurface:string;
+  elevatedSurface:string;
+  railSurface:string;
+  edge:string;
+  edgeStrong:string;
+  glow:string;
+  metal:string;
+  motif:string;
+  descriptor:string;
+}> = {
+  mystic:{
+    commandSurface:'rgba(18,16,34,.96)',
+    elevatedSurface:'rgba(30,24,50,.90)',
+    railSurface:'rgba(17,20,34,.80)',
+    edge:'rgba(196,181,253,.18)',
+    edgeStrong:'rgba(34,211,238,.30)',
+    glow:'rgba(34,211,238,.16)',
+    metal:'#B8B4CE',
+    motif:'ORBITAL',
+    descriptor:'Luminous orbital glass and cool energy.'
+  },
+  athlete:{
+    commandSurface:'rgba(9,22,30,.96)',
+    elevatedSurface:'rgba(14,32,42,.90)',
+    railSurface:'rgba(10,24,32,.82)',
+    edge:'rgba(14,165,233,.22)',
+    edgeStrong:'rgba(252,211,77,.26)',
+    glow:'rgba(14,165,233,.16)',
+    metal:'#CBD5E1',
+    motif:'PERFORMANCE GRID',
+    descriptor:'Technical performance surfaces and electric precision.'
+  },
+  spartan:{
+    commandSurface:'rgba(28,15,14,.96)',
+    elevatedSurface:'rgba(39,22,17,.90)',
+    railSurface:'rgba(29,20,16,.82)',
+    edge:'rgba(180,83,9,.24)',
+    edgeStrong:'rgba(212,175,55,.30)',
+    glow:'rgba(212,175,55,.13)',
+    metal:'#D6C6AA',
+    motif:'FORGED',
+    descriptor:'Dark forged metal with bronze-gold restraint.'
+  },
+};
+
 export const typography = {
   display: { letterSpacing: -0.8 },
   eyebrow: { letterSpacing: 1.6 },
@@ -64,4 +110,8 @@ export const premiumRadius = {
 
 export function paletteForArchetype(archetype: HeroArchetype) {
   return archetypePalettes[archetype];
+}
+
+export function materialForArchetype(archetype: HeroArchetype) {
+  return archetypeMaterials[archetype];
 }

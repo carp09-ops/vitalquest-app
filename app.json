@@ -9,7 +9,21 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow VitalQuest to verify distance and movement during endurance encounters."
+        }
+      ],
+      [
+        "@appeeky/expo-healthkit",
+        {
+          "healthSharePermission": "Allow VitalQuest to read workout and heart-rate data to verify completed training.",
+          "healthUpdatePermission": false,
+          "isBackgroundDeliveryEnabled": false
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,

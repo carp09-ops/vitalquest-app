@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { saveCompletedWorkout } from './db';
 import { calculateDisciplineXP, calculateRecoveryXP, calculateVitalityXP } from './gameEngine';
 import { IconArt } from './IconArt';
 import { useProgressionSnapshot } from './useProgression';
 import { useVitalTheme } from './ThemeProvider';
+import { scaleTrustedAmount, XPTrustResult } from './xpTrust';
 
 const blocks = [
   { id: 'upper', title: 'Thoracic Opener', copy: 'Restore upper-back rotation and shoulder position.', minutes: 5 },
@@ -21,42 +22,47 @@ export default function RecoveryEncounterV2(){
   const {theme}=useVitalTheme();
   const {snapshot}=useProgressionSnapshot();
   const t=theme.tokens;
-  const [duration,setDuration]=useState('20');
-  const [done,setDone]=useState<string[]>([]);
-  const [result,setResult]=useState<null|{xp:number;vitality:number;discipline:number;duration:number}>(null);
-  const mins=Math.max(0,Number(duration)||0);
-  const projected=useMemo(()=>({
-    xp:calculateRecoveryXP({durationMinutes:mins,completedBlocks:done.length,streakDays:snapshot.streakDays}),
-    vitality:calculateVitalityXP({durationMinutes:mins,completedBlocks:done.length}),
-    discipline:calculateDisciplineXP({completedBlocks:done.length,streakDays:snapshot.streakDays}),
-  }),[mins,done.length,snapshot.streakDays]);
+  const [targetDuration,setTargetDuration]=useState('20');
+  const [startedAt]=useState(()=>new Date());
+  const [elapsedSeconds,setElapsedSeconds]=useState(0);
+  const [done,setDone]=useState<Record<string,string>>({});
+  const [result,setResult]=useState<null|{rawXP:number;awardedXP:number;vitality:number;discipline:number;duration:number;trust:XPTrustResult}>(null);
+  const targetMins=Math.max(5,Number(targetDuration)||20);
+  const actualMins=Math.max(0,Math.floor(elapsedSeconds/60));
+  const completedBlocks=Object.keys(done).length;
+  useEffect(()=>{const timer=setInterval(()=>setElapsedSeconds(Math.max(0,Math.floor((Date.now()-startedAt.getTime())/1000))),1000);return()=>clearInterval(timer);},[startedAt]);
+  const projection=useMemo(()=>({
+    xp:calculateRecoveryXP({durationMinutes:targetMins,completedBlocks:Math.max(2,completedBlocks),streakDays:snapshot.streakDays}),
+    vitality:calculateVitalityXP({durationMinutes:targetMins,completedBlocks:Math.max(2,completedBlocks)}),
+    discipline:calculateDisciplineXP({completedBlocks:Math.max(2,completedBlocks),streakDays:snapshot.streakDays}),
+  }),[targetMins,completedBlocks,snapshot.streakDays]);
 
-  function toggle(id:string){setDone(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id]);}
+  function toggle(id:string){setDone(current=>{const next={...current};if(next[id])delete next[id];else next[id]=new Date().toISOString();return next;});}
 
   async function finish(){
-    if(done.length<2||mins<5){Alert.alert('Complete more of the protocol','Finish at least two recovery blocks and log at least five minutes.');return;}
-    const completedAt=new Date();
-    const sessionId=makeId('recovery');
-    await saveCompletedWorkout(db,{
-      sessionId,templateId:'recovery',name:'Recovery Protocol',startedAt:new Date(completedAt.getTime()-mins*60000).toISOString(),completedAt:completedAt.toISOString(),durationMinutes:mins,totalVolume:0,totalXP:projected.xp,sets:[],
+    if(completedBlocks<2){Alert.alert('Complete more of the protocol','Finish at least two recovery blocks before completing the encounter.');return;}
+    if(actualMins<5){Alert.alert('Recovery is still in progress',`VitalQuest has tracked ${actualMins} live minute${actualMins===1?'':'s'}. At least 5 live minutes are required before recovery XP can be banked.`);return;}
+    const completedAt=new Date();const rawXP=calculateRecoveryXP({durationMinutes:actualMins,completedBlocks,streakDays:snapshot.streakDays});const rawVitality=calculateVitalityXP({durationMinutes:actualMins,completedBlocks});const rawDiscipline=calculateDisciplineXP({completedBlocks,streakDays:snapshot.streakDays});const sessionId=makeId('recovery');const blockTimestamps=Object.values(done).sort();
+    const trust=await saveCompletedWorkout(db,{
+      sessionId,templateId:'recovery',name:'Recovery Protocol',startedAt:startedAt.toISOString(),completedAt:completedAt.toISOString(),durationMinutes:actualMins,totalVolume:0,totalXP:rawXP,sets:[],verificationEvidence:{source:'live_app',modality:'recovery',liveTracked:true,completedUnits:completedBlocks},syncDetails:{targetDurationMinutes:targetMins,blockTimestamps},
       attributeGains:[
-        {attribute:'vitality',amount:projected.vitality,reason:'mobility_recovery'},
-        {attribute:'discipline',amount:projected.discipline,reason:'recovery_consistency'},
+        {attribute:'vitality',amount:rawVitality,reason:'mobility_recovery'},
+        {attribute:'discipline',amount:rawDiscipline,reason:'recovery_consistency'},
       ],
     });
-    setResult({xp:projected.xp,vitality:projected.vitality,discipline:projected.discipline,duration:mins});
+    setResult({rawXP,awardedXP:trust.awardedXP,vitality:scaleTrustedAmount(rawVitality,trust.multiplier),discipline:scaleTrustedAmount(rawDiscipline,trust.multiplier),duration:actualMins,trust});
   }
 
-  if(result){return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><View style={styles.result}><IconArt name="trophy" size={80}/><Text style={[styles.kicker,{color:t.accent}]}>RECOVERY COMPLETE</Text><Text style={[styles.resultTitle,{color:t.text}]}>Capacity restored.</Text><Text style={[styles.resultCopy,{color:t.muted}]}>Recovery counts as progression because sustainable training is part of the build.</Text><View style={styles.resultGrid}><Reward label="SESSION XP" value={`+${result.xp}`} /><Reward label="VITALITY" value={`+${result.vitality}`} /><Reward label="DISCIPLINE" value={`+${result.discipline}`} /></View><Pressable style={[styles.primary,{backgroundColor:t.accent}]} onPress={()=>router.replace('/(tabs)/train')}><Text style={[styles.primaryText,{color:t.background}]}>RETURN TO TRAINING HALL</Text></Pressable></View></SafeAreaView>}
+  if(result){return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><View style={styles.result}><IconArt name="trophy" size={80}/><Text style={[styles.kicker,{color:t.accent}]}>RECOVERY COMPLETE · {result.trust.tier}</Text><Text style={[styles.resultTitle,{color:t.text}]}>Capacity restored.</Text><Text style={[styles.resultCopy,{color:t.muted}]}>+{result.awardedXP} XP banked from {result.duration} live minutes and {completedBlocks} completed recovery blocks. Raw value {result.rawXP} XP · {result.trust.confidence}% confidence.</Text><View style={styles.resultGrid}><Reward label="BANKED XP" value={`+${result.awardedXP}`} /><Reward label="VITALITY" value={`+${result.vitality}`} /><Reward label="DISCIPLINE" value={`+${result.discipline}`} /></View><Pressable style={[styles.primary,{backgroundColor:t.accent}]} onPress={()=>router.replace('/insights')}><Text style={[styles.primaryText,{color:t.background}]}>VIEW XP TRUST LEDGER</Text></Pressable></View></SafeAreaView>}
 
   return <SafeAreaView style={[styles.safe,{backgroundColor:t.background}]}><ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}><View style={styles.shell}>
-    <View style={styles.top}><Pressable onPress={()=>router.back()}><Text style={[styles.back,{color:t.muted}]}>‹ EXIT</Text></Pressable><Text style={[styles.topLabel,{color:t.accent}]}>RECOVERY ENCOUNTER</Text><View style={{width:38}}/></View>
-    <View style={[styles.hero,{backgroundColor:t.heroSurface,borderColor:t.border}]}><IconArt name="streak" size={60}/><Text style={[styles.kicker,{color:t.accent}]}>VITALITY · DISCIPLINE</Text><Text style={[styles.title,{color:t.text}]}>Restore capacity.</Text><Text style={[styles.copy,{color:t.muted}]}>Mobility, easy range work and a deliberate downshift build the attributes that keep harder training repeatable.</Text><View style={styles.preview}><Metric label="XP" value={`+${projected.xp}`} /><Metric label="VITALITY" value={`+${projected.vitality}`} /><Metric label="DISCIPLINE" value={`+${projected.discipline}`} /></View></View>
+    <View style={styles.top}><Pressable onPress={()=>router.back()}><Text style={[styles.back,{color:t.muted}]}>‹ EXIT</Text></Pressable><Text style={[styles.topLabel,{color:t.accent}]}>RECOVERY ENCOUNTER · LIVE</Text><View style={{width:38}}/></View>
+    <View style={[styles.hero,{backgroundColor:t.heroSurface,borderColor:t.border}]}><IconArt name="streak" size={60}/><Text style={[styles.kicker,{color:t.accent}]}>VITALITY · DISCIPLINE</Text><Text style={[styles.title,{color:t.text}]}>Restore capacity.</Text><Text style={[styles.copy,{color:t.muted}]}>Target duration shapes the protocol. XP uses actual elapsed time and completed blocks, so typing a longer duration cannot create progression.</Text><View style={styles.preview}><Metric label="TARGET RAW XP" value={`+${projection.xp}`} /><Metric label="LIVE TIME" value={`${actualMins}:${String(elapsedSeconds%60).padStart(2,'0')}`} /><Metric label="BLOCKS" value={`${completedBlocks}/4`} /></View></View>
 
-    <View style={[styles.durationCard,{backgroundColor:t.surface,borderColor:t.border}]}><View><Text style={[styles.kicker,{color:t.accent}]}>PROTOCOL DURATION</Text><Text style={[styles.smallCopy,{color:t.muted}]}>Adjust if your recovery session runs shorter or longer.</Text></View><View style={[styles.inputWrap,{borderColor:t.border,backgroundColor:t.surfaceElevated}]}><TextInput value={duration} onChangeText={setDuration} keyboardType="numeric" style={[styles.input,{color:t.text}]} /><Text style={[styles.unit,{color:t.muted}]}>MIN</Text></View></View>
+    <View style={[styles.durationCard,{backgroundColor:t.surface,borderColor:t.border}]}><View><Text style={[styles.kicker,{color:t.accent}]}>TARGET DURATION</Text><Text style={[styles.smallCopy,{color:t.muted}]}>This plans the session only. The live clock is authoritative for XP.</Text></View><View style={[styles.inputWrap,{borderColor:t.border,backgroundColor:t.surfaceElevated}]}><TextInput value={targetDuration} onChangeText={setTargetDuration} keyboardType="numeric" style={[styles.input,{color:t.text}]} /><Text style={[styles.unit,{color:t.muted}]}>MIN</Text></View></View>
 
     <View><Text style={[styles.kicker,{color:t.accent}]}>MOBILITY BLOCKS</Text><Text style={[styles.sectionTitle,{color:t.text}]}>Complete what your body needs.</Text></View>
-    <View style={styles.blocks}>{blocks.map((block,index)=>{const complete=done.includes(block.id);return <Pressable key={block.id} onPress={()=>toggle(block.id)} style={[styles.block,{backgroundColor:t.surface,borderColor:complete?t.positive:t.border}]}><View style={[styles.blockIndex,{borderColor:complete?t.positive:t.border,backgroundColor:complete?`${t.positive}18`:t.surfaceElevated}]}><Text style={[styles.blockIndexText,{color:complete?t.positive:t.accent}]}>{complete?'✓':index+1}</Text></View><View style={{flex:1}}><Text style={[styles.blockTitle,{color:t.text}]}>{block.title}</Text><Text style={[styles.blockCopy,{color:t.muted}]}>{block.copy}</Text></View><Text style={[styles.minutes,{color:t.muted}]}>{block.minutes} MIN</Text></Pressable>})}</View>
+    <View style={styles.blocks}>{blocks.map((block,index)=>{const complete=Boolean(done[block.id]);return <Pressable key={block.id} onPress={()=>toggle(block.id)} style={[styles.block,{backgroundColor:t.surface,borderColor:complete?t.positive:t.border}]}><View style={[styles.blockIndex,{borderColor:complete?t.positive:t.border,backgroundColor:complete?`${t.positive}18`:t.surfaceElevated}]}><Text style={[styles.blockIndexText,{color:complete?t.positive:t.accent}]}>{complete?'✓':index+1}</Text></View><View style={{flex:1}}><Text style={[styles.blockTitle,{color:t.text}]}>{block.title}</Text><Text style={[styles.blockCopy,{color:t.muted}]}>{block.copy}</Text></View><Text style={[styles.minutes,{color:t.muted}]}>{block.minutes} MIN</Text></Pressable>})}</View>
     <Pressable onPress={finish} style={[styles.primary,{backgroundColor:t.accent}]}><Text style={[styles.primaryText,{color:t.background}]}>COMPLETE RECOVERY</Text><Text style={[styles.arrow,{color:t.background}]}>›</Text></Pressable>
   </View></ScrollView></SafeAreaView>
 

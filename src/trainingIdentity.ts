@@ -23,30 +23,32 @@ function exerciseCounts(exerciseIds:string[]){
   return counts;
 }
 
+function dominantPattern(counts:{push:number;pull:number;legs:number}):ResistancePattern{
+  const total=counts.push+counts.pull+counts.legs;
+  if(!total)return'mixed';
+  const ranked=(Object.entries(counts) as Array<[Exclude<ResistancePattern,'mixed'>,number]>).sort((a,b)=>b[1]-a[1]);
+  return ranked[0][1]>total/2?ranked[0][0]:'mixed';
+}
+
 export function inferResistancePattern(templateId:string,exerciseIds:string[]=[]):ResistancePattern{
   const key=(templateId||'').toLowerCase();
   if(key==='push')return'push';
   if(key==='pull')return'pull';
-  if(key==='legs'||key.includes('lower')||key.includes('leg-day'))return'legs';
-  const counts=exerciseCounts(exerciseIds);const total=counts.push+counts.pull+counts.legs;
-  if(total){
-    const ranked=(Object.entries(counts) as Array<[Exclude<ResistancePattern,'mixed'>,number]>).sort((a,b)=>b[1]-a[1]);
-    if(ranked[0][1]>total/2)return ranked[0][0];
-    if(ranked[0][1]===total&&total>0)return ranked[0][0];
-  }
-  if(key.includes('upper')){
-    if(counts.push>counts.pull)return'push';
-    if(counts.pull>counts.push)return'pull';
-  }
+  if(key==='legs')return'legs';
+  const counts=exerciseCounts(exerciseIds);const actual=dominantPattern(counts);
+  if(actual!=='mixed')return actual;
+  const recognized=counts.push+counts.pull+counts.legs;
+  if(recognized>0)return'mixed';
+  if(key.includes('lower')||key.includes('leg-day'))return'legs';
   return'mixed';
 }
 
 export function isLegOrFullBodyResistance(templateId:string,exerciseIds:string[]=[]){
   const key=(templateId||'').toLowerCase();
-  if(key==='legs'||key.includes('lower')||key.includes('full'))return true;
-  const counts=exerciseCounts(exerciseIds);
-  const upper=counts.push+counts.pull;
-  return counts.legs>0&&(upper>0||inferResistancePattern(templateId,exerciseIds)==='legs');
+  if(key==='legs')return true;
+  const counts=exerciseCounts(exerciseIds);const recognized=counts.push+counts.pull+counts.legs;
+  if(recognized>0){const upper=counts.push+counts.pull;return counts.legs>0&&(upper>0||counts.legs>upper);}
+  return key.includes('lower')||key.includes('full');
 }
 
 export function recommendationMatchesSession(recommendedTemplateId:string,actualTemplateId:string,exerciseIds:string[]=[]){

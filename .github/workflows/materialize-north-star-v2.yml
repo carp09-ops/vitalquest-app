@@ -23,12 +23,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p public/art/brand public/art/worlds/mystic public/art/worlds/spartan
+
           cat .asset-v2/loading-eclipse/000.txt .asset-v2/loading-eclipse/001.txt | base64 --decode > public/art/brand/loading-eclipse.webp
           cat .asset-v2/mystic-world/000.txt .asset-v2/mystic-world/001.txt .asset-v2/mystic-world/002a.txt .asset-v2/mystic-world/002b.txt | base64 --decode > public/art/worlds/mystic/world.webp
+          cat .asset-v3/spartan-hero/000.txt .asset-v3/spartan-hero/000b.txt .asset-v3/spartan-hero/001.txt .asset-v3/spartan-hero/002a.txt .asset-v3/spartan-hero/002b.txt .asset-v3/spartan-hero/002c-fixed.txt .asset-v3/spartan-hero/002d.txt .asset-v3/spartan-hero/003.txt .asset-v3/spartan-hero/004.txt .asset-v3/spartan-hero/005.txt .asset-v3/spartan-hero/006.txt .asset-v3/spartan-hero/007.txt | base64 --decode > public/art/worlds/spartan/hero.webp
+
           test "$(wc -c < public/art/brand/loading-eclipse.webp)" -eq 27602
           test "$(wc -c < public/art/worlds/mystic/world.webp)" -eq 45618
+          test "$(wc -c < public/art/worlds/spartan/hero.webp)" -eq 81100
+
+          echo "eac43ee16a0ad66bbd04fa457ea88821002344c5f02fff4dd145749c7e76156e  public/art/worlds/spartan/hero.webp" | sha256sum -c -
           file public/art/brand/loading-eclipse.webp | grep -qi 'Web/P image\|WebP'
           file public/art/worlds/mystic/world.webp | grep -qi 'Web/P image\|WebP'
+          file public/art/worlds/spartan/hero.webp | grep -qi 'Web/P image\|WebP'
 
       - name: Commit verified production artwork
         shell: bash

@@ -1,14 +1,14 @@
 import React from 'react';
 import { ImageBackground,Platform,StyleSheet,Text,View } from 'react-native';
 import VerificationSetupV2 from './VerificationSetupV2';
-import { ART } from './artAssets';
+import { questArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 
 export default function VerificationExperienceV3(){
   const {archetype}=useHeroArchetype();const palette=paletteForArchetype(archetype);const material=materialForArchetype(archetype);
   return <View style={styles.root}>
-    <ImageBackground source={{uri:ART.quest}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
+    <ImageBackground source={{uri:questArtForArchetype(archetype)}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
       <View style={styles.scrim}/><View style={[styles.edge,{backgroundColor:palette.primary}]}/>
       <View style={styles.inner}><View style={[styles.badge,{borderColor:material.edgeStrong,backgroundColor:'rgba(5,7,10,.54)'}]}><Text style={[styles.badgeText,{color:palette.highlight}]}>EVIDENCE · TRUST · PROGRESSION</Text></View><Text style={[styles.kicker,{color:palette.highlight}]}>VERIFICATION</Text><Text style={styles.title}>Strengthen the proof behind the XP.</Text><Text style={styles.sub}>Connect supported evidence sources so more of your real work can be confidently banked into progression.</Text></View>
     </ImageBackground>

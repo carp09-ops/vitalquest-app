@@ -18,11 +18,11 @@ jobs:
           ref: north-star-assets
           fetch-depth: 0
 
-      - name: Decode and validate approved artwork
+      - name: Decode and validate verified artwork
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/art/brand public/art/worlds/mystic public/art/worlds/athlete public/art/worlds/spartan
+          mkdir -p public/art/brand public/art/worlds/mystic
           decode_asset() {
             local src="$1"
             local dst="$2"
@@ -30,28 +30,17 @@ jobs:
           }
           decode_asset .asset-v2/loading-eclipse public/art/brand/loading-eclipse.webp
           decode_asset .asset-v2/mystic-world public/art/worlds/mystic/world.webp
-          decode_asset .asset-v2/mystic-hero public/art/worlds/mystic/hero.webp
-          decode_asset .asset-v2/athlete-world public/art/worlds/athlete/world.webp
-          decode_asset .asset-v2/athlete-hero public/art/worlds/athlete/hero.webp
-          decode_asset .asset-v2/spartan-world public/art/worlds/spartan/world.webp
-          decode_asset .asset-v2/spartan-hero public/art/worlds/spartan/hero.webp
 
           test "$(wc -c < public/art/brand/loading-eclipse.webp)" -eq 27602
           test "$(wc -c < public/art/worlds/mystic/world.webp)" -eq 45618
-          test "$(wc -c < public/art/worlds/mystic/hero.webp)" -eq 42886
-          test "$(wc -c < public/art/worlds/athlete/world.webp)" -eq 41356
-          test "$(wc -c < public/art/worlds/athlete/hero.webp)" -eq 39336
-          test "$(wc -c < public/art/worlds/spartan/world.webp)" -eq 37806
-          test "$(wc -c < public/art/worlds/spartan/hero.webp)" -eq 44606
-
           file public/art/brand/loading-eclipse.webp | grep -qi 'Web/P image\|WebP'
-          for f in public/art/worlds/*/*.webp; do file "$f" | grep -qi 'Web/P image\|WebP'; done
+          file public/art/worlds/mystic/world.webp | grep -qi 'Web/P image\|WebP'
 
       - name: Commit verified production artwork
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public/art/brand/loading-eclipse.webp public/art/worlds
-          git commit -m "Materialize verified North Star production artwork" || exit 0
+          git add public/art/brand/loading-eclipse.webp public/art/worlds/mystic/world.webp
+          git commit -m "Materialize verified loading and Mystic world artwork" || exit 0
           git push origin HEAD:north-star-assets

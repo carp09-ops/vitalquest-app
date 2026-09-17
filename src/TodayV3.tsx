@@ -15,18 +15,7 @@ import { materialForArchetype,paletteForArchetype } from './designSystem';
 import { deriveHeroEvolution } from './heroEvolution';
 import BrandLoadingScreen from './BrandLoadingScreen';
 import DataStatePanel from './DataStatePanel';
-
-const BASE=Platform.OS==='web'?'/vitalquest-app':'';
-const WORLD_ART={
-  mystic:`${BASE}/art/v1/mythic-world.webp`,
-  athlete:`${BASE}/art/v1/celestial-world.webp`,
-  spartan:`${BASE}/art/v1/titan-world.webp`,
-} as const;
-const HERO_ART={
-  mystic:`${BASE}/art/v1/mythic-hero.webp`,
-  athlete:`${BASE}/art/v1/celestial-world.webp`,
-  spartan:`${BASE}/art/v1/titan-world.webp`,
-} as const;
+import { worldArtForArchetype } from './artAssets';
 
 export default function TodayV3(){
   const {width}=useWindowDimensions();const wide=width>=900;const compact=width<430;
@@ -41,7 +30,7 @@ export default function TodayV3(){
   return <SafeAreaView style={[styles.safe,{backgroundColor:'transparent'}]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.page,wide&&styles.pageWide]}><View style={styles.shell}>
     <Entrance><View style={styles.brandRow}><View><Text style={[styles.wordmark,{color:t.text}]}>VITAL<Text style={{color:palette.highlight}}>QUEST</Text></Text><Text style={[styles.brandLine,{color:t.muted}]}>YOUR ARC · IN MOTION</Text></View><Text style={[styles.todayTag,{color:palette.highlight,borderColor:material.edgeStrong}]}>TODAY</Text></View></Entrance>
 
-    <Entrance delay={25}><ImageBackground source={{uri:WORLD_ART[archetype]}} resizeMode="cover" imageStyle={styles.heroImage} style={[styles.heroStage,{borderColor:material.edgeStrong}]}>
+    <Entrance delay={25}><ImageBackground source={{uri:worldArtForArchetype(archetype)}} resizeMode="cover" imageStyle={styles.heroImage} style={[styles.heroStage,{borderColor:material.edgeStrong}]}>
       <View style={styles.heroShade}/><View style={[styles.heroGlow,{backgroundColor:material.glow}]}/>
       <View style={[styles.heroLayout,wide&&styles.heroLayoutWide]}>
         <View style={styles.heroCopyCol}>

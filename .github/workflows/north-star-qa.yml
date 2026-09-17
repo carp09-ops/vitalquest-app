@@ -48,6 +48,7 @@ jobs:
           grep -q "worlds/athlete/hero.webp" src/artAssets.ts
           grep -q "worlds/spartan/hero.webp" src/artAssets.ts
           ! grep -q "/art/v1/" src/OnboardingV4.tsx
+          ! grep -q "/art/v1/" src/OnboardingV5.tsx
           for f in src/TodayV3.tsx src/TrainV3.tsx src/QuestBoardV3.tsx src/ArmoryV3.tsx src/HeroV3.tsx src/TrainingInsightsV3.tsx src/WorkoutExperienceV3.tsx src/GeneratedWorkoutExperienceV3.tsx src/BuilderExperienceV3.tsx src/EquipmentExperienceV3.tsx src/VerificationExperienceV3.tsx src/BetaFeedbackV3.tsx; do
             ! grep -q "/art/v1/" "$f"
           done

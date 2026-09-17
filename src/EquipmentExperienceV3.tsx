@@ -1,14 +1,14 @@
 import React from 'react';
 import { ImageBackground,Platform,StyleSheet,Text,View } from 'react-native';
 import EquipmentProfileV2 from './EquipmentProfileV2';
-import { ART } from './artAssets';
+import { armoryArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 
 export default function EquipmentExperienceV3(){
   const {archetype}=useHeroArchetype();const palette=paletteForArchetype(archetype);const material=materialForArchetype(archetype);
   return <View style={styles.root}>
-    <ImageBackground source={{uri:ART.armory.hall}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
+    <ImageBackground source={{uri:armoryArtForArchetype(archetype)}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
       <View style={styles.scrim}/><View style={[styles.edge,{backgroundColor:palette.primary}]}/>
       <View style={styles.inner}><View style={[styles.badge,{borderColor:material.edgeStrong,backgroundColor:'rgba(5,7,10,.52)'}]}><Text style={[styles.badgeText,{color:palette.highlight}]}>LOADOUT · TRAINING INPUT</Text></View><Text style={[styles.kicker,{color:palette.highlight}]}>EQUIPMENT</Text><Text style={styles.title}>Build your training loadout.</Text><Text style={styles.sub}>VitalQuest uses this profile to keep recommendations realistic. Add what you actually have access to and the Arc will adapt around it.</Text></View>
     </ImageBackground>

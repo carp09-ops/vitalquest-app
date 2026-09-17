@@ -1,1 +1,0 @@
-export const WORLD_CHOOSER_BOARD='data:image/png;base64,

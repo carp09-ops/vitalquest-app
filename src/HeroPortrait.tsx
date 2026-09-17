@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image,StyleSheet,useWindowDimensions,View } from 'react-native';
 import { useHeroArchetype } from './useHeroArchetype';
-import { heroArtFor } from './vitalquestArt';
+import { heroArtForArchetype } from './artAssets';
 import { materialForArchetype } from './designSystem';
 
 export default function HeroPortrait(){
@@ -10,7 +10,7 @@ export default function HeroPortrait(){
   const compact=width<700;
   const material=materialForArchetype(archetype);
   return <View pointerEvents="none" style={[styles.shell,compact&&styles.shellCompact,{borderColor:material.edgeStrong,backgroundColor:material.commandSurface}]}>
-    <Image source={{uri:heroArtFor(archetype)}} resizeMode="cover" style={styles.image}/>
+    <Image source={{uri:heroArtForArchetype(archetype)}} resizeMode="cover" style={styles.image}/>
     <View style={[styles.veil,compact&&styles.veilCompact]}/>
     <View style={[styles.edge,{backgroundColor:material.glow}]}/>
   </View>;

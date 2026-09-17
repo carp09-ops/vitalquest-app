@@ -1,3 +1,6 @@
-import EquipmentProfileV2 from '../src/EquipmentProfileV2';
-import WorldBackdrop from '../src/WorldBackdrop';
-export default function EquipmentScreen(){return <WorldBackdrop scene="train"><EquipmentProfileV2/></WorldBackdrop>}
+import React from 'react';
+import EquipmentExperienceV3 from '../src/EquipmentExperienceV3';
+
+export default function EquipmentScreen(){
+  return <EquipmentExperienceV3/>;
+}

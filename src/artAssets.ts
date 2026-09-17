@@ -1,33 +1,36 @@
 import type { HeroArchetype } from './heroEvolution';
 
-export const ART_BASE='/vitalquest-app/art/v1';
-export const BRAND_BASE='/vitalquest-app/assets/branding';
+export const APP_BASE='/vitalquest-app';
+export const ART_BASE=`${APP_BASE}/art`;
+export const BRAND_BASE=`${APP_BASE}/assets/branding`;
 
 export const ART={
   worlds:{
-    mythicForge:`${ART_BASE}/mythic-world.webp`,
-    celestialPulse:`${ART_BASE}/celestial-world.webp`,
-    titanCore:`${ART_BASE}/titan-world.webp`,
+    mystic:`${ART_BASE}/worlds/mystic/world.webp`,
+    athlete:`${ART_BASE}/worlds/athlete/world.webp`,
+    spartan:`${ART_BASE}/worlds/spartan/world.webp`,
   },
   hero:{
-    mythicForge:`${ART_BASE}/mythic-hero.webp`,
-    celestialPulse:`${ART_BASE}/celestial-world.webp`,
-    titanCore:`${ART_BASE}/titan-world.webp`,
+    mystic:`${ART_BASE}/worlds/mystic/hero.webp`,
+    athlete:`${ART_BASE}/worlds/athlete/hero.webp`,
+    spartan:`${ART_BASE}/worlds/spartan/hero.webp`,
   },
-  training:`${ART_BASE}/training-hall.webp`,
-  quest:`${ART_BASE}/quest-gate.webp`,
-  encounters:{
-    push:`${ART_BASE}/training-hall.webp`,
-    pull:`${ART_BASE}/training-hall.webp`,
-    legs:`${ART_BASE}/training-hall.webp`,
-    run:`${ART_BASE}/mythic-world.webp`,
-    recovery:`${ART_BASE}/mythic-world.webp`,
+  loading:`${ART_BASE}/brand/loading-eclipse.webp`,
+  training:{
+    mystic:`${ART_BASE}/worlds/mystic/world.webp`,
+    athlete:`${ART_BASE}/worlds/athlete/world.webp`,
+    spartan:`${ART_BASE}/worlds/spartan/world.webp`,
+  },
+  quest:{
+    mystic:`${ART_BASE}/worlds/mystic/world.webp`,
+    athlete:`${ART_BASE}/worlds/athlete/world.webp`,
+    spartan:`${ART_BASE}/worlds/spartan/world.webp`,
   },
   armory:{
-    hall:`${ART_BASE}/mythic-world.webp`,
-    gearFallback:`${ART_BASE}/mythic-hero.webp`,
+    mystic:`${ART_BASE}/worlds/mystic/world.webp`,
+    athlete:`${ART_BASE}/worlds/athlete/world.webp`,
+    spartan:`${ART_BASE}/worlds/spartan/world.webp`,
   },
-  loading:`${ART_BASE}/mythic-world.webp`,
   branding:{
     icon192:`${BRAND_BASE}/icon-192.png`,
     icon512:`${BRAND_BASE}/icon-512.png`,
@@ -36,13 +39,21 @@ export const ART={
 } as const;
 
 export function worldArtForArchetype(archetype:HeroArchetype){
-  if(archetype==='mystic')return ART.worlds.mythicForge;
-  if(archetype==='spartan')return ART.worlds.titanCore;
-  return ART.worlds.celestialPulse;
+  return ART.worlds[archetype] ?? ART.worlds.athlete;
 }
 
 export function heroArtForArchetype(archetype:HeroArchetype){
-  if(archetype==='mystic')return ART.hero.mythicForge;
-  if(archetype==='spartan')return ART.hero.titanCore;
-  return ART.hero.celestialPulse;
+  return ART.hero[archetype] ?? ART.hero.athlete;
+}
+
+export function trainingArtForArchetype(archetype:HeroArchetype){
+  return ART.training[archetype] ?? ART.training.athlete;
+}
+
+export function questArtForArchetype(archetype:HeroArchetype){
+  return ART.quest[archetype] ?? ART.quest.athlete;
+}
+
+export function armoryArtForArchetype(archetype:HeroArchetype){
+  return ART.armory[archetype] ?? ART.armory.athlete;
 }

@@ -18,39 +18,40 @@ jobs:
           ref: north-star-assets
           fetch-depth: 0
       - name: Wire onboarding to North Star asset registry
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
           p=Path('src/OnboardingV4.tsx')
           s=p.read_text()
           if "from './artAssets'" not in s:
               s=s.replace("import BrandLoadingScreen from './BrandLoadingScreen';", "import BrandLoadingScreen from './BrandLoadingScreen';\nimport { ART } from './artAssets';")
           old="""const BASE=Platform.OS==='web'?'/vitalquest-app':'';
-const WORLD_ART:Record<HeroArchetype,string>={
- mystic:`${BASE}/art/v1/mythic-world.webp`,
- athlete:`${BASE}/art/v1/celestial-world.webp`,
- spartan:`${BASE}/art/v1/titan-world.webp`,
-};
-const HERO_ART:Record<HeroArchetype,string>={
- mystic:`${BASE}/art/v1/mythic-hero.webp`,
- athlete:`${BASE}/art/v1/celestial-world.webp`,
- spartan:`${BASE}/art/v1/titan-world.webp`,
-};
-const WELCOME_ART=`${BASE}/art/today-celestial-premium.webp`;"""
+          const WORLD_ART:Record<HeroArchetype,string>={
+           mystic:`${BASE}/art/v1/mythic-world.webp`,
+           athlete:`${BASE}/art/v1/celestial-world.webp`,
+           spartan:`${BASE}/art/v1/titan-world.webp`,
+          };
+          const HERO_ART:Record<HeroArchetype,string>={
+           mystic:`${BASE}/art/v1/mythic-hero.webp`,
+           athlete:`${BASE}/art/v1/celestial-world.webp`,
+           spartan:`${BASE}/art/v1/titan-world.webp`,
+          };
+          const WELCOME_ART=`${BASE}/art/today-celestial-premium.webp`;"""
           new="""const WORLD_ART:Record<HeroArchetype,string>={
- mystic:ART.worlds.mystic,
- athlete:ART.worlds.athlete,
- spartan:ART.worlds.spartan,
-};
-const HERO_ART:Record<HeroArchetype,string>={
- mystic:ART.hero.mystic,
- athlete:ART.hero.athlete,
- spartan:ART.hero.spartan,
-};
-const WELCOME_ART=ART.loading;"""
-          if old in s:
-              s=s.replace(old,new)
+           mystic:ART.worlds.mystic,
+           athlete:ART.worlds.athlete,
+           spartan:ART.worlds.spartan,
+          };
+          const HERO_ART:Record<HeroArchetype,string>={
+           mystic:ART.hero.mystic,
+           athlete:ART.hero.athlete,
+           spartan:ART.hero.spartan,
+          };
+          const WELCOME_ART=ART.loading;"""
+          s=s.replace(old,new)
           p.write_text(s)
+          PY
       - name: Verify no onboarding legacy art references remain
         shell: bash
         run: |

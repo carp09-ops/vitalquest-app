@@ -1,0 +1,67 @@
+name: Apply North Star Code Wiring
+
+on:
+  push:
+    branches: [north-star-assets]
+    paths:
+      - '.github/workflows/apply-north-star-code.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: north-star-assets
+          fetch-depth: 0
+      - name: Wire onboarding to North Star asset registry
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('src/OnboardingV4.tsx')
+          s=p.read_text()
+          if "from './artAssets'" not in s:
+              s=s.replace("import BrandLoadingScreen from './BrandLoadingScreen';", "import BrandLoadingScreen from './BrandLoadingScreen';\nimport { ART } from './artAssets';")
+          old="""const BASE=Platform.OS==='web'?'/vitalquest-app':'';
+const WORLD_ART:Record<HeroArchetype,string>={
+ mystic:`${BASE}/art/v1/mythic-world.webp`,
+ athlete:`${BASE}/art/v1/celestial-world.webp`,
+ spartan:`${BASE}/art/v1/titan-world.webp`,
+};
+const HERO_ART:Record<HeroArchetype,string>={
+ mystic:`${BASE}/art/v1/mythic-hero.webp`,
+ athlete:`${BASE}/art/v1/celestial-world.webp`,
+ spartan:`${BASE}/art/v1/titan-world.webp`,
+};
+const WELCOME_ART=`${BASE}/art/today-celestial-premium.webp`;"""
+          new="""const WORLD_ART:Record<HeroArchetype,string>={
+ mystic:ART.worlds.mystic,
+ athlete:ART.worlds.athlete,
+ spartan:ART.worlds.spartan,
+};
+const HERO_ART:Record<HeroArchetype,string>={
+ mystic:ART.hero.mystic,
+ athlete:ART.hero.athlete,
+ spartan:ART.hero.spartan,
+};
+const WELCOME_ART=ART.loading;"""
+          if old in s:
+              s=s.replace(old,new)
+          p.write_text(s)
+      - name: Verify no onboarding legacy art references remain
+        shell: bash
+        run: |
+          set -e
+          ! grep -q '/art/v1/' src/OnboardingV4.tsx
+          ! grep -q 'today-celestial-premium' src/OnboardingV4.tsx
+      - name: Commit wiring
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/OnboardingV4.tsx
+          git commit -m "Wire onboarding to North Star production art" || exit 0
+          git push origin HEAD:north-star-assets

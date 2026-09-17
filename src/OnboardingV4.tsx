@@ -10,21 +10,21 @@ import { saveOnboardingProfile,type TrainingExperience } from './onboarding';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 import { IconArt,type VQIconName } from './IconArt';
 import BrandLoadingScreen from './BrandLoadingScreen';
+import { ART } from './artAssets';
 
 type Step=0|1|2|3|4|5;
 const PANEL='rgba(4,10,15,.90)';
-const BASE=Platform.OS==='web'?'/vitalquest-app':'';
 const WORLD_ART:Record<HeroArchetype,string>={
- mystic:`${BASE}/art/v1/mythic-world.webp`,
- athlete:`${BASE}/art/v1/celestial-world.webp`,
- spartan:`${BASE}/art/v1/titan-world.webp`,
+ mystic:ART.worlds.mystic,
+ athlete:ART.worlds.athlete,
+ spartan:ART.worlds.spartan,
 };
 const HERO_ART:Record<HeroArchetype,string>={
- mystic:`${BASE}/art/v1/mythic-hero.webp`,
- athlete:`${BASE}/art/v1/celestial-world.webp`,
- spartan:`${BASE}/art/v1/titan-world.webp`,
+ mystic:ART.hero.mystic,
+ athlete:ART.hero.athlete,
+ spartan:ART.hero.spartan,
 };
-const WELCOME_ART=`${BASE}/art/today-celestial-premium.webp`;
+const WELCOME_ART=ART.loading;
 const EQ_ICON:Record<EquipmentId,VQIconName>={barbell:'strength',dumbbells:'strength',bench:'strength',rack:'strength',cables:'strength',machines:'strength',pullup:'agility',cardio:'stamina',bodyweight:'streak'};
 const EQ_LABEL:Record<EquipmentId,string>={barbell:'Barbell',dumbbells:'Dumbbells',bench:'Bench',rack:'Rack',cables:'Bands / Cables',machines:'Machines',pullup:'Pull-Up Bar',cardio:'Cardio',bodyweight:'Bodyweight'};
 const WORLD_COPY:Record<HeroArchetype,{tag:string;vow:string}>={

@@ -1,3 +1,6 @@
-import CustomWorkoutBuilderV2 from '../src/CustomWorkoutBuilderV2';
-import WorldBackdrop from '../src/WorldBackdrop';
-export default function CustomWorkoutScreen(){return <WorldBackdrop scene="train"><CustomWorkoutBuilderV2/></WorldBackdrop>}
+import React from 'react';
+import BuilderExperienceV3 from '../src/BuilderExperienceV3';
+
+export default function CustomWorkoutScreen(){
+  return <BuilderExperienceV3 mode="custom"/>;
+}

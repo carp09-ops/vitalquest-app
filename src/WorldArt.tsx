@@ -2,7 +2,7 @@ import React,{useEffect,useRef} from 'react';
 import { Animated,Easing,StyleSheet,useWindowDimensions,View } from 'react-native';
 import type { HeroArchetype } from './heroEvolution';
 import { useReducedMotion } from './Interaction';
-import { worldArtFor } from './vitalquestArt';
+import { worldArtForArchetype } from './artAssets';
 
 type Props={archetype:HeroArchetype;strength?:'soft'|'medium'|'strong';position?:'top'|'center'};
 
@@ -31,7 +31,7 @@ export default function WorldArt({archetype,strength='medium',position='center'}
   const scale=drift.interpolate({inputRange:[0,1],outputRange:[baseScale,baseScale*(tablet?1.008:1.012)]});
 
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-    <Animated.Image source={{uri:worldArtFor(archetype)}} resizeMode="cover" style={[StyleSheet.absoluteFill,{transform:[{translateX},{translateY},{scale}]}]}/>
+    <Animated.Image source={{uri:worldArtForArchetype(archetype)}} resizeMode="cover" style={[StyleSheet.absoluteFill,{transform:[{translateX},{translateY},{scale}]}]}/>
     <View style={[StyleSheet.absoluteFill,{backgroundColor:`rgba(4,7,10,${veil})`}]}/>
     <View style={[styles.vignetteTop,{height:tablet?'26%':'34%',backgroundColor:strength==='strong'?'rgba(4,7,10,.05)':'rgba(4,7,10,.14)'}]}/>
     <View style={[styles.vignetteBottom,{height:tablet?'42%':'52%',backgroundColor:tablet?'rgba(4,7,10,.58)':'rgba(4,7,10,.70)'}]}/>

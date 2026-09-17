@@ -1,11 +1,14 @@
 import React, { PropsWithChildren, useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useVitalTheme } from './ThemeProvider';
+import { useHeroArchetype } from './useHeroArchetype';
+import WorldArt from './WorldArt';
 
 type Scene = 'today' | 'train' | 'quests' | 'armory' | 'hero';
 
 export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ scene: Scene }>) {
   const { theme } = useVitalTheme();
+  const { archetype } = useHeroArchetype();
   const t = theme.tokens;
   const reveal = useRef(new Animated.Value(0)).current;
 
@@ -16,10 +19,9 @@ export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ s
 
   return (
     <View style={[styles.root, { backgroundColor: t.background }]}> 
+      <WorldArt archetype={archetype} strength={scene==='hero'?'medium':'soft'} position="top" />
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <View style={[styles.topWash, { backgroundColor: `${t.accent}0D` }]} />
-        <View style={[styles.gridLine, styles.gridLineOne, { backgroundColor: `${t.text}08` }]} />
-        <View style={[styles.gridLine, styles.gridLineTwo, { backgroundColor: `${t.text}06` }]} />
+        <View style={styles.readabilityVeil} />
         <View style={[styles.bottomShade, { backgroundColor: t.navBackground }]} />
       </View>
       <Animated.View
@@ -29,7 +31,7 @@ export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ s
             opacity: reveal,
             transform: [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
           },
-          Platform.OS === 'web' ? ({ backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.018), transparent 18%)' } as any) : null,
+          Platform.OS === 'web' ? ({ backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,.012), transparent 18%)' } as any) : null,
         ]}
       >
         {children}
@@ -41,9 +43,6 @@ export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ s
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   content: { flex: 1 },
-  topWash: { position: 'absolute', top: -120, left: '18%', right: '18%', height: 280, borderRadius: 220 },
-  gridLine: { position: 'absolute', left: 18, right: 18, height: 1 },
-  gridLineOne: { top: 118 },
-  gridLineTwo: { top: 208 },
-  bottomShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 130, opacity: .28 },
+  readabilityVeil:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(4,7,10,.20)'},
+  bottomShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 130, opacity: .24 },
 });

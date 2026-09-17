@@ -1,7 +1,6 @@
 import React from 'react';
-import WorkoutForgeV2 from '../src/WorkoutForgeV2';
-import WorldBackdrop from '../src/WorldBackdrop';
+import BuilderExperienceV3 from '../src/BuilderExperienceV3';
 
 export default function ForgeScreen(){
-  return <WorldBackdrop scene="train"><WorkoutForgeV2/></WorldBackdrop>;
+  return <BuilderExperienceV3 mode="adaptive"/>;
 }

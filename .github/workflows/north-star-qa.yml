@@ -30,10 +30,17 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Verify North Star asset registry
+      - name: Verify North Star production assets
         shell: bash
         run: |
           set -euo pipefail
+          test -s public/art/brand/loading-eclipse.webp
+          test -s public/art/worlds/mystic/world.webp
+          test -s public/art/worlds/mystic/hero.webp
+          test -s public/art/worlds/athlete/world.webp
+          test -s public/art/worlds/athlete/hero.webp
+          test -s public/art/worlds/spartan/world.webp
+          test -s public/art/worlds/spartan/hero.webp
           grep -q "worlds/mystic/world.webp" src/artAssets.ts
           grep -q "worlds/athlete/world.webp" src/artAssets.ts
           grep -q "worlds/spartan/world.webp" src/artAssets.ts

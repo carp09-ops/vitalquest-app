@@ -5,7 +5,7 @@ import ActiveWorkoutV2 from './ActiveWorkoutV2';
 import EnduranceWorkoutV2 from './EnduranceWorkoutV2';
 import RecoveryEncounterV2 from './RecoveryEncounterV2';
 import { templates } from './data';
-import { ART } from './artAssets';
+import { trainingArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 
@@ -24,7 +24,7 @@ export default function WorkoutExperienceV3(){
   const copy=ENCOUNTER_COPY[templateId]??{kicker:'ACTIVE ENCOUNTER',title:template?.name??'Training Session',sub:'Complete the work. Build the record. Let the next recommendation adapt to what happened here.'};
   const {archetype}=useHeroArchetype();
   const palette=paletteForArchetype(archetype);const material=materialForArchetype(archetype);
-  const art=templateId==='run'?ART.encounters.run:templateId==='recovery'?ART.encounters.recovery:templateId==='pull'?ART.encounters.pull:templateId==='legs'?ART.encounters.legs:ART.encounters.push;
+  const art=trainingArtForArchetype(archetype);
   const encounter=templateId==='run'?<EnduranceWorkoutV2/>:templateId==='recovery'?<RecoveryEncounterV2/>:<ActiveWorkoutV2/>;
 
   return <View style={styles.root}>

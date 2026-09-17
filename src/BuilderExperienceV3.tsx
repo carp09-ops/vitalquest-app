@@ -2,7 +2,7 @@ import React from 'react';
 import { ImageBackground,Platform,StyleSheet,Text,View } from 'react-native';
 import WorkoutForgeV2 from './WorkoutForgeV2';
 import CustomWorkoutBuilderV2 from './CustomWorkoutBuilderV2';
-import { ART } from './artAssets';
+import { trainingArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 
@@ -11,7 +11,7 @@ export default function BuilderExperienceV3({mode}:{mode:Mode}){
   const {archetype}=useHeroArchetype();const palette=paletteForArchetype(archetype);const material=materialForArchetype(archetype);
   const adaptive=mode==='adaptive';
   return <View style={styles.root}>
-    <ImageBackground source={{uri:ART.training}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
+    <ImageBackground source={{uri:trainingArtForArchetype(archetype)}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
       <View style={styles.scrim}/><View style={[styles.edge,{backgroundColor:palette.primary}]}/>
       <View style={styles.inner}><View style={[styles.badge,{borderColor:material.edgeStrong,backgroundColor:'rgba(5,7,10,.52)'}]}><Text style={[styles.badgeText,{color:palette.highlight}]}>{adaptive?'TRAINING INTELLIGENCE':'PLAYER-CREATED SESSION'}</Text></View><Text style={[styles.kicker,{color:palette.highlight}]}>{adaptive?'ADAPTIVE BUILDER':'CUSTOM WORKOUT'}</Text><Text style={styles.title}>{adaptive?'Forge the next session.':'Build your own encounter.'}</Text><Text style={styles.sub}>{adaptive?'VitalQuest combines your equipment, recent work, fatigue and Arc objective to build a session that fits today.':'Choose the movements, sets and targets. Your completed work still feeds the same progression and trust ledger.'}</Text></View>
     </ImageBackground>

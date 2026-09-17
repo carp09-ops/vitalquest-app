@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/art/brand public/art/worlds/mystic
+          mkdir -p public/art/brand public/art/worlds/mystic public/art/worlds/spartan
           cat .asset-v2/loading-eclipse/000.txt .asset-v2/loading-eclipse/001.txt | base64 --decode > public/art/brand/loading-eclipse.webp
           cat .asset-v2/mystic-world/000.txt .asset-v2/mystic-world/001.txt .asset-v2/mystic-world/002a.txt .asset-v2/mystic-world/002b.txt | base64 --decode > public/art/worlds/mystic/world.webp
           test "$(wc -c < public/art/brand/loading-eclipse.webp)" -eq 27602
@@ -35,6 +35,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public/art/brand/loading-eclipse.webp public/art/worlds/mystic/world.webp
-          git commit -m "Materialize verified loading and Mystic world artwork" || exit 0
+          git add public/art/brand/loading-eclipse.webp public/art/worlds/mystic/world.webp public/art/worlds/spartan/hero.webp
+          git commit -m "Materialize verified loading, Mystic world, and Spartan hero artwork" || exit 0
           git push origin HEAD:north-star-assets

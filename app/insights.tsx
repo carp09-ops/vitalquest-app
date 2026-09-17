@@ -1,7 +1,7 @@
 import React from 'react';
-import TrainingInsightsV2 from '../src/TrainingInsightsV2';
+import TrainingInsightsV3 from '../src/TrainingInsightsV3';
 import WorldBackdrop from '../src/WorldBackdrop';
 
 export default function InsightsScreen(){
-  return <WorldBackdrop scene="train"><TrainingInsightsV2/></WorldBackdrop>;
+  return <WorldBackdrop scene="train"><TrainingInsightsV3/></WorldBackdrop>;
 }

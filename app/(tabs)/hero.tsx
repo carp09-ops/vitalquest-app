@@ -1,14 +1,12 @@
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import HeroV2 from '../../src/HeroV2';
-import HeroPortrait from '../../src/HeroPortrait';
+import HeroV3 from '../../src/HeroV3';
 import WorldBackdrop from '../../src/WorldBackdrop';
 
 export default function HeroScreen() {
   return <WorldBackdrop scene="hero">
-    <HeroPortrait />
-    <HeroV2 />
+    <HeroV3 />
     <Pressable onPress={()=>router.push('/verification')} style={styles.verify}><Text style={styles.verifyText}>CONNECT VERIFICATION</Text></Pressable>
   </WorldBackdrop>;
 }

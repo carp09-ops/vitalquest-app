@@ -41,6 +41,16 @@ jobs:
           test -s public/art/worlds/athlete/hero.webp
           test -s public/art/worlds/spartan/world.webp
           test -s public/art/worlds/spartan/hero.webp
+
+          # Reject clipped/placeholder artwork: production North Star files must be substantial WebPs.
+          # minimum production art sizes
+          test "$(wc -c < public/art/brand/loading-eclipse.webp)" -ge 20000
+          test "$(wc -c < public/art/worlds/mystic/world.webp)" -ge 30000
+          test "$(wc -c < public/art/worlds/mystic/hero.webp)" -ge 30000
+          test "$(wc -c < public/art/worlds/athlete/world.webp)" -ge 30000
+          test "$(wc -c < public/art/worlds/athlete/hero.webp)" -ge 30000
+          test "$(wc -c < public/art/worlds/spartan/world.webp)" -ge 30000
+          test "$(wc -c < public/art/worlds/spartan/hero.webp)" -ge 30000
           grep -q "worlds/mystic/world.webp" src/artAssets.ts
           grep -q "worlds/athlete/world.webp" src/artAssets.ts
           grep -q "worlds/spartan/world.webp" src/artAssets.ts

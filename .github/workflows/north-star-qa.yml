@@ -1,0 +1,46 @@
+name: North Star QA Build
+
+on:
+  push:
+    branches: ['north-star-assets']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: north-star-qa
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Verify North Star asset registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "worlds/mystic/world.webp" src/artAssets.ts
+          grep -q "worlds/athlete/world.webp" src/artAssets.ts
+          grep -q "worlds/spartan/world.webp" src/artAssets.ts
+          grep -q "worlds/mystic/hero.webp" src/artAssets.ts
+          grep -q "worlds/athlete/hero.webp" src/artAssets.ts
+          grep -q "worlds/spartan/hero.webp" src/artAssets.ts
+          ! grep -q "/art/v1/" src/OnboardingV4.tsx
+
+      - name: Export Expo web app
+        run: npx expo export --platform web

@@ -1,3 +1,5 @@
+import type { HeroArchetype } from './heroEvolution';
+
 export const ART_BASE='/vitalquest-app/art/v1';
 export const BRAND_BASE='/vitalquest-app/assets/branding';
 
@@ -32,3 +34,15 @@ export const ART={
     appleTouch:`${BRAND_BASE}/apple-touch-icon.png`,
   },
 } as const;
+
+export function worldArtForArchetype(archetype:HeroArchetype){
+  if(archetype==='mystic')return ART.worlds.mythicForge;
+  if(archetype==='spartan')return ART.worlds.titanCore;
+  return ART.worlds.celestialPulse;
+}
+
+export function heroArtForArchetype(archetype:HeroArchetype){
+  if(archetype==='mystic')return ART.hero.mythicForge;
+  if(archetype==='spartan')return ART.hero.titanCore;
+  return ART.hero.celestialPulse;
+}

@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           mkdir -p public/art/worlds/mystic public/art/worlds/athlete public/art/worlds/spartan
 
-          cat .asset-v4/mystic-hero/000.txt .asset-v4/mystic-hero/000b.txt .asset-v4/mystic-hero/001.txt .asset-v4/mystic-hero/002.txt             | base64 --decode > public/art/worlds/mystic/hero.webp
+          cat .asset-v4/mystic-hero/000.txt .asset-v4/mystic-hero/000a.txt .asset-v4/mystic-hero/000b.txt .asset-v4/mystic-hero/001.txt .asset-v4/mystic-hero/002.txt             | base64 --decode > public/art/worlds/mystic/hero.webp
 
           cat .asset-v4/athlete-world/000.txt .asset-v4/athlete-world/001.txt .asset-v4/athlete-world/002.txt             | base64 --decode > public/art/worlds/athlete/world.webp
 

@@ -3,7 +3,7 @@ import React,{useMemo} from 'react';
 import { ImageBackground,Platform,StyleSheet,Text,View } from 'react-native';
 import GeneratedWorkoutV2 from './GeneratedWorkoutV2';
 import type { GeneratedWorkoutPlan } from './workoutGenerator';
-import { ART } from './artAssets';
+import { trainingArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
 
@@ -12,7 +12,7 @@ export default function GeneratedWorkoutExperienceV3(){
   const plan=useMemo<GeneratedWorkoutPlan|null>(()=>{try{return raw?JSON.parse(decodeURIComponent(raw)):null}catch{return null}},[raw]);
   const {archetype}=useHeroArchetype();const palette=paletteForArchetype(archetype);const material=materialForArchetype(archetype);
   return <View style={styles.root}>
-    <ImageBackground source={{uri:ART.training}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
+    <ImageBackground source={{uri:trainingArtForArchetype(archetype)}} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImage}>
       <View style={styles.scrim}/><View style={[styles.edge,{backgroundColor:palette.primary}]}/>
       <View style={styles.inner}><View style={[styles.badge,{borderColor:material.edgeStrong,backgroundColor:'rgba(5,7,10,.52)'}]}><Text style={[styles.badgeText,{color:palette.highlight}]}>ADAPTIVE BUILDER · LIVE ENCOUNTER</Text></View><Text style={[styles.kicker,{color:palette.highlight}]}>{plan?.deload?'DELOAD PROTOCOL':'GENERATED TRIAL'}</Text><Text style={styles.title}>{plan?.name??'Adaptive Session'}</Text><Text style={styles.sub}>{plan?`${plan.exercises.length} movements · target ${plan.targetXP} XP · built from your equipment, history and current fatigue.`:'Your generated training session is being prepared.'}</Text></View>
     </ImageBackground>

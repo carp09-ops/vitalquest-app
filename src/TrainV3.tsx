@@ -12,7 +12,7 @@ import { buildAdaptiveWeeklyPlan } from './weeklyPlan';
 import { useVitalTheme } from './ThemeProvider';
 import { useHeroArchetype } from './useHeroArchetype';
 import { materialForArchetype,paletteForArchetype } from './designSystem';
-import { ART } from './artAssets';
+import { trainingArtForArchetype } from './artAssets';
 import BrandLoadingScreen from './BrandLoadingScreen';
 import DataStatePanel from './DataStatePanel';
 
@@ -43,7 +43,7 @@ export default function TrainV3(){
     <Entrance><View style={s.header}><Text style={[s.kicker,{color:palette.highlight}]}>TRAINING · {material.motif}</Text><Text style={[s.title,compact&&s.titleCompact,{color:t.text}]}>Choose your trial.</Text><Text style={[s.lede,{color:t.muted}]}>VitalQuest adapts the next session to your Arc, readiness, history and available equipment.</Text></View></Entrance>
 
     <Entrance delay={40}><View style={[s.hero,{borderColor:material.edgeStrong}]}>
-      <ImageBackground source={{uri:ART.training}} resizeMode="cover" style={s.heroImage} imageStyle={s.heroImageRadius}>
+      <ImageBackground source={{uri:trainingArtForArchetype(archetype)}} resizeMode="cover" style={s.heroImage} imageStyle={s.heroImageRadius}>
         <View style={s.heroShade}/>
         <View style={[s.heroRail,{borderColor:material.edgeStrong,backgroundColor:'rgba(4,8,12,.80)'}]}>
           <View style={s.heroTop}><View style={{flex:1}}><Text style={[s.kicker,{color:palette.highlight}]}>NEXT TRIAL · {recommendation.priority}</Text><Text style={[s.heroTitle,compact&&s.heroTitleCompact]}>{featured.name}</Text><Text style={s.heroSub}>{recommendation.title}</Text></View><View style={[s.readiness,{borderColor:material.edgeStrong,backgroundColor:'rgba(4,8,12,.76)'}]}><Text style={s.readinessLabel}>READINESS</Text><Text style={s.readinessValue}>{recommendation.readiness}</Text></View></View>

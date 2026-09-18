@@ -1,11 +1,13 @@
 import React from 'react';
 import { ImageBackground,SafeAreaView,ScrollView,StyleSheet,Text,View } from 'react-native';
 import BetaFeedbackV2 from './BetaFeedbackV2';
-import { ART } from './artAssets';
+import { questArtForArchetype } from './artAssets';
+import { useHeroArchetype } from './useHeroArchetype';
 
 export default function BetaFeedbackV3(){
+  const {archetype}=useHeroArchetype();
   return <SafeAreaView style={styles.safe}>
-    <ImageBackground source={{uri:ART.quest}} resizeMode="cover" style={styles.hero}>
+    <ImageBackground source={{uri:questArtForArchetype(archetype)}} resizeMode="cover" style={styles.hero}>
       <View style={styles.scrim}/>
       <View style={styles.heroCopy}>
         <Text style={styles.kicker}>FIELD REPORT</Text>

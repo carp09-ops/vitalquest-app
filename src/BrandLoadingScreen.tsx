@@ -13,9 +13,10 @@ export default function BrandLoadingScreen({variant='launch',message}:{variant?:
   const rise=useRef(new Animated.Value(reduced?0:10)).current;
   const pulse=useRef(new Animated.Value(.35)).current;
   const spin=useRef(new Animated.Value(0)).current;
+  const travel=useRef(new Animated.Value(0)).current;
 
   useEffect(()=>{
-    if(reduced){opacity.setValue(1);rise.setValue(0);pulse.setValue(.8);spin.setValue(0);return}
+    if(reduced){opacity.setValue(1);rise.setValue(0);pulse.setValue(.8);spin.setValue(0);travel.setValue(.6);return}
     Animated.parallel([
       Animated.timing(opacity,{toValue:1,duration:420,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
       Animated.timing(rise,{toValue:0,duration:520,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
@@ -25,12 +26,17 @@ export default function BrandLoadingScreen({variant='launch',message}:{variant?:
       Animated.timing(pulse,{toValue:.35,duration:1100,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),
     ]));
     const spinLoop=Animated.loop(Animated.timing(spin,{toValue:1,duration:3200,easing:Easing.linear,useNativeDriver:true}));
-    pulseLoop.start();spinLoop.start();
-    return()=>{pulseLoop.stop();spinLoop.stop()};
-  },[opacity,pulse,reduced,rise,spin]);
+    const travelLoop=Animated.loop(Animated.sequence([
+      Animated.timing(travel,{toValue:1,duration:1450,easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
+      Animated.timing(travel,{toValue:0,duration:0,useNativeDriver:true}),
+    ]));
+    pulseLoop.start();spinLoop.start();travelLoop.start();
+    return()=>{pulseLoop.stop();spinLoop.stop();travelLoop.stop()};
+  },[opacity,pulse,reduced,rise,spin,travel]);
 
   const calibrating=variant==='calibrating';
   const rotate=spin.interpolate({inputRange:[0,1],outputRange:['0deg','360deg']});
+  const progressX=travel.interpolate({inputRange:[0,1],outputRange:[-38,58]});
   return <View style={styles.root} accessibilityRole="progressbar" accessibilityLabel={message??(calibrating?'Calibrating your next session':'Loading VitalQuest')}>
     <ImageBackground source={{uri:ART.loading}} resizeMode="cover" style={styles.image} imageStyle={styles.imageStyle}>
       <View style={styles.scrim}/>
@@ -44,7 +50,7 @@ export default function BrandLoadingScreen({variant='launch',message}:{variant?:
           <Text style={styles.tagline}>MORE YOU AHEAD</Text>
         </View>
         <View style={styles.statusBlock}>
-          <View style={styles.progressRail}><Animated.View style={[styles.progressGlow,{opacity:pulse}]}/></View>
+          <View style={styles.progressRail}><Animated.View style={[styles.progressGlow,{opacity:pulse,transform:[{translateX:progressX}]}]}/></View>
           <Text style={styles.statusText}>{message??(calibrating?'CALIBRATING YOUR NEXT SESSION':'PREPARING YOUR ARC')}</Text>
           <Text style={styles.statusSub}>{calibrating?'UPDATING YOUR ARC AND PROGRESSION':'BODY · MIND · PERFORMANCE · LONGEVITY'}</Text>
         </View>
@@ -70,7 +76,7 @@ const styles=StyleSheet.create({
   tagline:{color:'rgba(235,218,189,.72)',fontSize:7,fontWeight:'800',letterSpacing:3,marginTop:7},
   statusBlock:{width:'100%',maxWidth:520,alignItems:'center',marginBottom:38},
   progressRail:{width:88,height:3,borderRadius:99,overflow:'hidden',backgroundColor:'rgba(255,255,255,.12)'},
-  progressGlow:{...StyleSheet.absoluteFillObject,backgroundColor:'#E7C488'},
+  progressGlow:{position:'absolute',left:0,top:0,bottom:0,width:'42%',borderRadius:99,backgroundColor:'#E7C488',shadowColor:'#E7C488',shadowOpacity:.8,shadowRadius:7},
   statusText:{color:'#F6F0E7',fontFamily:Platform.select({ios:'Georgia',default:'serif'}),fontSize:20,textAlign:'center',marginTop:18},
   statusSub:{color:'rgba(247,248,250,.48)',fontSize:6.5,fontWeight:'900',letterSpacing:1.8,marginTop:8,textAlign:'center'}
 });

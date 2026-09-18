@@ -1,1 +1,0 @@
-North Star asset migration is actively in progress on branch `north-star-assets`. Do not merge until world/hero art for Mystic, Athlete, and Spartan plus branded loading art are all materialized and wired through `artAssets.ts`.

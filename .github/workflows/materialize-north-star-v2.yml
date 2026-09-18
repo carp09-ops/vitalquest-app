@@ -1,10 +1,10 @@
-name: Materialize North Star V2 Assets
+name: Materialize North Star V4 Assets
 
 on:
   push:
     branches: ['north-star-assets']
     paths:
-      - '.asset-v2/READY'
+      - '.asset-v4/READY'
 
 permissions:
   contents: write
@@ -18,30 +18,40 @@ jobs:
           ref: north-star-assets
           fetch-depth: 0
 
-      - name: Decode and validate verified artwork
+      - name: Decode and validate clean North Star artwork
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public/art/brand public/art/worlds/mystic public/art/worlds/spartan
+          mkdir -p public/art/worlds/mystic public/art/worlds/athlete public/art/worlds/spartan
 
-          cat .asset-v2/loading-eclipse/000.txt .asset-v2/loading-eclipse/001.txt | base64 --decode > public/art/brand/loading-eclipse.webp
-          cat .asset-v2/mystic-world/000.txt .asset-v2/mystic-world/001.txt .asset-v2/mystic-world/002a.txt .asset-v2/mystic-world/002b.txt | base64 --decode > public/art/worlds/mystic/world.webp
-          cat .asset-v3/spartan-hero/000.txt .asset-v3/spartan-hero/000b.txt .asset-v3/spartan-hero/001.txt .asset-v3/spartan-hero/002a.txt .asset-v3/spartan-hero/002b.txt .asset-v3/spartan-hero/002c-fixed.txt .asset-v3/spartan-hero/002d.txt .asset-v3/spartan-hero/003.txt .asset-v3/spartan-hero/004.txt .asset-v3/spartan-hero/005.txt .asset-v3/spartan-hero/006.txt .asset-v3/spartan-hero/007.txt | base64 --decode > public/art/worlds/spartan/hero.webp
+          cat .asset-v4/mystic-hero/000.txt .asset-v4/mystic-hero/000b.txt .asset-v4/mystic-hero/001.txt .asset-v4/mystic-hero/002.txt             | base64 --decode > public/art/worlds/mystic/hero.webp
 
-          test "$(wc -c < public/art/brand/loading-eclipse.webp)" -eq 27602
-          test "$(wc -c < public/art/worlds/mystic/world.webp)" -eq 45618
-          test "$(wc -c < public/art/worlds/spartan/hero.webp)" -eq 81100
+          cat .asset-v4/athlete-world/000.txt .asset-v4/athlete-world/001.txt .asset-v4/athlete-world/002.txt             | base64 --decode > public/art/worlds/athlete/world.webp
 
-          echo "eac43ee16a0ad66bbd04fa457ea88821002344c5f02fff4dd145749c7e76156e  public/art/worlds/spartan/hero.webp" | sha256sum -c -
-          file public/art/brand/loading-eclipse.webp | grep -qi 'Web/P image\|WebP'
-          file public/art/worlds/mystic/world.webp | grep -qi 'Web/P image\|WebP'
-          file public/art/worlds/spartan/hero.webp | grep -qi 'Web/P image\|WebP'
+          { head -c 18000 .asset-v4/spartan-world/000.txt; cat .asset-v4/spartan-world/001.txt .asset-v4/spartan-world/002.txt; }             | base64 --decode > public/art/worlds/spartan/world.webp
+
+          { cat .asset-v4/spartan-hero/000.txt; head -c 6000 .asset-v4/spartan-hero/001a.txt; cat .asset-v4/spartan-hero/001b.txt .asset-v4/spartan-hero/001c.txt .asset-v4/spartan-hero/002.txt; }             | base64 --decode > public/art/worlds/spartan/hero.webp
+
+          test "$(wc -c < public/art/worlds/mystic/hero.webp)" -eq 36220
+          test "$(wc -c < public/art/worlds/athlete/world.webp)" -eq 34548
+          test "$(wc -c < public/art/worlds/spartan/world.webp)" -eq 31530
+          test "$(wc -c < public/art/worlds/spartan/hero.webp)" -eq 37074
+
+          echo "aa5fdbe9597855cfee0ca33233867e17a24ed552dfef4c155fb06c5137031a93  public/art/worlds/mystic/hero.webp" | sha256sum -c -
+          echo "040c4f210778adeeea3744dcd4b716efa55b5272fbdf04708a82fccf48fa7bc2  public/art/worlds/athlete/world.webp" | sha256sum -c -
+          echo "22bb04fcebb8d1c108336f9ab747f49d2a1a4fbbf1f181fd73dc00df5c802273  public/art/worlds/spartan/world.webp" | sha256sum -c -
+          echo "f572ec958bc876cdf3ad747cb418f8c664a6e328e21295d726164db4b8877643  public/art/worlds/spartan/hero.webp" | sha256sum -c -
+
+          for f in             public/art/worlds/mystic/hero.webp             public/art/worlds/athlete/world.webp             public/art/worlds/spartan/world.webp             public/art/worlds/spartan/hero.webp
+          do
+            file "$f" | grep -qi 'Web/P image\|WebP'
+          done
 
       - name: Commit verified production artwork
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public/art/brand/loading-eclipse.webp public/art/worlds/mystic/world.webp public/art/worlds/spartan/hero.webp
-          git commit -m "Materialize verified loading, Mystic world, and Spartan hero artwork" || exit 0
+          git add             public/art/worlds/mystic/hero.webp             public/art/worlds/athlete/world.webp             public/art/worlds/spartan/world.webp             public/art/worlds/spartan/hero.webp
+          git commit -m "Materialize verified North Star world and hero artwork" || exit 0
           git push origin HEAD:north-star-assets

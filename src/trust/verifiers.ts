@@ -1,4 +1,5 @@
 import { evaluateSessionIntegrity } from '../sessionIntegrity'
+import type { VerificationEvidence } from '../xpTrust'
 import type { TrustSessionInput, TrustVerifier } from './types'
 
 /** Baseline: the user typed it in. Always present, lowest precedence. */
@@ -47,22 +48,35 @@ export const liveAppVerifier: TrustVerifier = {
 
 type MinimalDb = { getAllAsync: (sql: string) => Promise<unknown[]> }
 
+/** Ledger fields the integrity verifier contributes beyond VerificationEvidence. */
+export interface IntegrityLedgerFields {
+  overlapCount: number
+  overlapSeconds: number
+}
+
 /**
  * Wraps the existing duplicate/clock integrity check as a verifier.
  * Takes a minimal DB interface so it stays testable without expo-sqlite.
- * Priority is high because it only contributes boolean flags, never `source`.
+ * Priority is high because it only contributes flags and ledger fields,
+ * never `source`. The overlap counts flow through the merge untouched by
+ * scoring so the session_verification record keeps its exact shape.
  */
 export function sessionIntegrityVerifier(db: MinimalDb): TrustVerifier {
   return {
     id: 'session_integrity',
     priority: 10,
-    async collect(session) {
+    async collect(session): Promise<Partial<VerificationEvidence> & IntegrityLedgerFields> {
       const r = await evaluateSessionIntegrity(db as never, {
         startedAt: session.startedAt,
         completedAt: session.completedAt,
         durationMinutes: session.durationMinutes,
       })
-      return { duplicateDetected: r.duplicateDetected, clockMismatch: r.clockMismatch }
+      return {
+        duplicateDetected: r.duplicateDetected,
+        clockMismatch: r.clockMismatch,
+        overlapCount: r.overlapCount,
+        overlapSeconds: r.overlapSeconds,
+      }
     },
   }
 }

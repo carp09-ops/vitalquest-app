@@ -1,9 +1,11 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { CustomWorkoutTemplate, DEFAULT_EQUIPMENT, EquipmentId } from './trainingPreferences';
 import type { HeroArchetype } from './heroEvolution';
-import { evaluateXPTrust, scaleTrustedAmount, VerificationEvidence } from './xpTrust';
-import { evaluateSessionIntegrity } from './sessionIntegrity';
-import { collectHealthVerificationEvidence, mergeVerificationEvidence } from './sensorVerification';
+import { scaleTrustedAmount, VerificationEvidence } from './xpTrust';
+import { runTrustPipelineDetailed, type TrustPipelineDetail } from './trust/pipeline';
+import { healthKitVerifier } from './trust/sensorVerifiers';
+import { sessionSaveTrustInput, sessionSaveVerifiers } from './trust/sessionSave';
+import type { IntegrityLedgerFields } from './trust/verifiers';
 import { isLegOrFullBodyResistance } from './trainingIdentity';
 
 export async function migrateDb(db: SQLiteDatabase) {
@@ -119,7 +121,7 @@ export async function migrateDb(db: SQLiteDatabase) {
 
 export type BankedAttributeGain={attribute:'strength'|'stamina'|'agility'|'vitality'|'discipline'|string;amount:number;reason:string;};
 type BaseSession={sessionId:string;templateId:string;name:string;startedAt:string;completedAt:string;durationMinutes:number;totalVolume:number;totalXP:number;strengthXP?:number;attributeGains?:BankedAttributeGain[];syncDetails?:Record<string,unknown>;verificationEvidence?:VerificationEvidence;exerciseIds?:string[];};
-type SessionSaveResult=ReturnType<typeof evaluateXPTrust>&{attributeGains:BankedAttributeGain[]};
+type SessionSaveResult=TrustPipelineDetail&{attributeGains:BankedAttributeGain[]};
 
 function defaultModality(templateId:string){if(templateId==='run')return'endurance'as const;if(templateId==='recovery')return'recovery'as const;return'resistance'as const;}
 
@@ -144,11 +146,9 @@ function withResistanceSupportGains(input:BaseSession,gains:BankedAttributeGain[
 
 async function writeSessionBase(db:SQLiteDatabase,input:BaseSession):Promise<SessionSaveResult>{
   const modality=defaultModality(input.templateId);
-  const integrity=await evaluateSessionIntegrity(db,{startedAt:input.startedAt,completedAt:input.completedAt,durationMinutes:input.durationMinutes});
-  const healthEvidence=await collectHealthVerificationEvidence({startedAt:input.startedAt,completedAt:input.completedAt,modality});
-  const baseEvidence:VerificationEvidence={source:'live_app',modality,durationMinutes:input.durationMinutes,totalVolume:input.totalVolume,liveTracked:true,...input.verificationEvidence};
-  const evidence=mergeVerificationEvidence(baseEvidence,healthEvidence);
-  const trust=evaluateXPTrust(input.totalXP,{...evidence,duplicateDetected:integrity.duplicateDetected||Boolean(evidence.duplicateDetected),clockMismatch:integrity.clockMismatch||Boolean(evidence.clockMismatch)});
+  const trust=await runTrustPipelineDetailed(input.totalXP,sessionSaveTrustInput(input,modality),[...sessionSaveVerifiers(db,input,modality),healthKitVerifier]);
+  const ledger=trust.evidence as VerificationEvidence&Partial<IntegrityLedgerFields>;
+  const integrity={duplicateDetected:Boolean(ledger.duplicateDetected),clockMismatch:Boolean(ledger.clockMismatch),overlapCount:Number(ledger.overlapCount??0),overlapSeconds:Number(ledger.overlapSeconds??0)};
   const baseAttributeGains:BankedAttributeGain[]=input.attributeGains?.length?input.attributeGains:input.strengthXP?[{attribute:'strength',amount:input.strengthXP,reason:'resistance_training'}]:[];
   const rawAttributeGains=withResistanceSupportGains(input,baseAttributeGains);
   const attributeGains=rawAttributeGains.map(gain=>({...gain,amount:scaleTrustedAmount(gain.amount,trust.multiplier)}));

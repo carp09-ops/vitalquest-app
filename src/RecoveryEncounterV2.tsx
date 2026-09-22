@@ -7,8 +7,10 @@ import { calculateDisciplineXP, calculateRecoveryXP, calculateVitalityXP } from 
 import { IconArt } from './IconArt';
 import { useProgressionSnapshot } from './useProgression';
 import { useVitalTheme } from './ThemeProvider';
-import { scaleTrustedAmount, XPTrustResult } from './xpTrust';
+import { scaleTrustedAmount } from './xpTrust';
+import type { TrustPipelineDetail } from './trust/pipeline';
 import BetaSessionFeedback from './BetaSessionFeedback';
+import TrustBreakdown from './TrustBreakdown';
 import ProgressionRecapCard from './ProgressionRecapCard';
 import { buildProgressionRecap } from './progressionRecap';
 import WorkoutWorld from './WorkoutWorld';
@@ -32,7 +34,7 @@ export default function RecoveryEncounterV2(){
   const [startedAt]=useState(()=>new Date());
   const [elapsedSeconds,setElapsedSeconds]=useState(0);
   const [done,setDone]=useState<Record<string,string>>({});
-  const [result,setResult]=useState<null|{sessionId:string;rawXP:number;awardedXP:number;vitality:number;discipline:number;duration:number;trust:XPTrustResult}>(null);
+  const [result,setResult]=useState<null|{sessionId:string;rawXP:number;awardedXP:number;vitality:number;discipline:number;duration:number;trust:TrustPipelineDetail}>(null);
   const targetMins=Math.max(5,Number(targetDuration)||20);
   const actualMins=Math.max(0,Math.floor(elapsedSeconds/60));
   const completedBlocks=Object.keys(done).length;
@@ -59,7 +61,7 @@ export default function RecoveryEncounterV2(){
     setResult({sessionId,rawXP,awardedXP:trust.awardedXP,vitality:scaleTrustedAmount(rawVitality,trust.multiplier),discipline:scaleTrustedAmount(rawDiscipline,trust.multiplier),duration:actualMins,trust});
   }
 
-  if(result){const recap=buildProgressionRecap({snapshot,awardedXP:result.awardedXP,modality:'recovery',attributes:[{label:'Vitality',amount:result.vitality},{label:'Discipline',amount:result.discipline}]});return <WorkoutWorld intensity="completion"><SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.result}><View style={[styles.completionHalo,{borderColor:material.edgeStrong,backgroundColor:material.glow}]}><IconArt name="streak" size={72} tint={palette.highlight}/></View><Text style={[styles.kicker,{color:palette.highlight}]}>RECOVERY SESSION COMPLETE · {result.trust.tier}</Text><Text style={[styles.resultTitle,{color:t.text}]}>Capacity restored.</Text><Text style={[styles.resultCopy,{color:t.muted}]}>+{result.awardedXP} XP banked from {result.duration} live minutes and {completedBlocks} completed recovery blocks. Raw value {result.rawXP} XP · {result.trust.confidence}% confidence.</Text><ProgressionRecapCard recap={recap}/><View style={styles.resultGrid}><Reward label="BANKED XP" value={`+${result.awardedXP}`} /><Reward label="VITALITY" value={`+${result.vitality}`} /><Reward label="DISCIPLINE" value={`+${result.discipline}`} /></View><BetaSessionFeedback sessionId={result.sessionId} context={{modality:'recovery',rawXP:result.rawXP,awardedXP:result.awardedXP,confidence:result.trust.confidence,tier:result.trust.tier,duration:result.duration,completedBlocks}}/><Pressable style={[styles.primary,{backgroundColor:palette.primary}]} onPress={()=>router.replace('/(tabs)/hero')}><Text style={styles.primaryTextLight}>VIEW PROGRESS</Text></Pressable></ScrollView></SafeAreaView></WorkoutWorld>}
+  if(result){const recap=buildProgressionRecap({snapshot,awardedXP:result.awardedXP,modality:'recovery',attributes:[{label:'Vitality',amount:result.vitality},{label:'Discipline',amount:result.discipline}]});return <WorkoutWorld intensity="completion"><SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.result}><View style={[styles.completionHalo,{borderColor:material.edgeStrong,backgroundColor:material.glow}]}><IconArt name="streak" size={72} tint={palette.highlight}/></View><Text style={[styles.kicker,{color:palette.highlight}]}>RECOVERY SESSION COMPLETE · {result.trust.tier}</Text><Text style={[styles.resultTitle,{color:t.text}]}>Capacity restored.</Text><Text style={[styles.resultCopy,{color:t.muted}]}>+{result.awardedXP} XP banked from {result.duration} live minutes and {completedBlocks} completed recovery blocks. Raw value {result.rawXP} XP · {result.trust.confidence}% confidence.</Text><ProgressionRecapCard recap={recap}/><View style={styles.resultGrid}><Reward label="BANKED XP" value={`+${result.awardedXP}`} /><Reward label="VITALITY" value={`+${result.vitality}`} /><Reward label="DISCIPLINE" value={`+${result.discipline}`} /></View><TrustBreakdown tier={result.trust.tier} confidence={result.trust.confidence} awardedXP={result.awardedXP} withheldXP={result.trust.withheldXP} breakdown={result.trust.ruleBreakdown}/><BetaSessionFeedback sessionId={result.sessionId} context={{modality:'recovery',rawXP:result.rawXP,awardedXP:result.awardedXP,confidence:result.trust.confidence,tier:result.trust.tier,duration:result.duration,completedBlocks}}/><Pressable style={[styles.primary,{backgroundColor:palette.primary}]} onPress={()=>router.replace('/(tabs)/hero')}><Text style={styles.primaryTextLight}>VIEW PROGRESS</Text></Pressable></ScrollView></SafeAreaView></WorkoutWorld>}
 
   return <WorkoutWorld><SafeAreaView style={styles.safe}><ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}><View style={styles.shell}>
     <View style={styles.top}><Pressable onPress={()=>router.back()}><Text style={[styles.back,{color:t.muted}]}>‹ EXIT</Text></Pressable><Text style={[styles.topLabel,{color:palette.highlight}]}>RECOVERY SESSION · LIVE</Text><View style={{width:38}}/></View>

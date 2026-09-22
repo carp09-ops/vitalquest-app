@@ -1,6 +1,6 @@
 import type { HeroArchetype } from './heroEvolution';
 
-export const APP_BASE='/vitalquest-app';
+export const APP_BASE = __DEV__ ? '' : '/vitalquest-app';
 export const ART_BASE=`${APP_BASE}/art`;
 export const LEGACY_ART_BASE=`${ART_BASE}/v1`;
 export const BRAND_BASE=`${APP_BASE}/assets/branding`;

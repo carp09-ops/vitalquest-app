@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { IconArt, VQIconName } from './IconArt';
 import { useVitalTheme } from './ThemeProvider';
+import { APP_BASE } from './artAssets';
 
 type WorldId = 'mythicForge' | 'celestialPulse' | 'titanCore';
 
@@ -47,8 +48,8 @@ const WORLD: Record<WorldId, WorldSpec> = {
     title: 'Forge the hero\nbehind the numbers.',
     vow: 'Discipline builds freedom.',
     className: 'Arclight Vanguard',
-    hero: '/vitalquest-app/art/premium/mythic-hero.jpg',
-    focus: '/vitalquest-app/art/premium/mythic-quest.jpg',
+    hero: `${APP_BASE}/art/premium/mythic-hero.jpg`,
+    focus: `${APP_BASE}/art/premium/mythic-quest.jpg`,
     metal: '#C79A4A',
     panel: 'rgba(13,16,18,.91)',
     panelDeep: 'rgba(5,7,8,.97)',
@@ -69,8 +70,8 @@ const WORLD: Record<WorldId, WorldSpec> = {
     title: 'Find the rhythm.\nRise beyond it.',
     vow: 'Momentum becomes ascension.',
     className: 'Astral Wayfinder',
-    hero: '/vitalquest-app/art/today-celestial-premium.webp',
-    focus: '/vitalquest-app/art/today-celestial-premium.webp',
+    hero: `${APP_BASE}/art/today-celestial-premium.webp`,
+    focus: `${APP_BASE}/art/today-celestial-premium.webp`,
     metal: '#D9E9FF',
     panel: 'rgba(14,21,35,.89)',
     panelDeep: 'rgba(7,12,24,.97)',
@@ -91,8 +92,8 @@ const WORLD: Record<WorldId, WorldSpec> = {
     title: 'Build capacity.\nBreak the ceiling.',
     vow: 'Progress is engineered.',
     className: 'Titan Operative',
-    hero: '/vitalquest-app/art/today-titan-premium.webp',
-    focus: '/vitalquest-app/art/today-titan-premium.webp',
+    hero: `${APP_BASE}/art/today-titan-premium.webp`,
+    focus: `${APP_BASE}/art/today-titan-premium.webp`,
     metal: '#8BD7F2',
     panel: 'rgba(8,17,23,.92)',
     panelDeep: 'rgba(3,9,13,.98)',

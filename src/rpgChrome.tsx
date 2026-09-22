@@ -2,15 +2,16 @@ import React from 'react';
 import { Platform, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useVitalTheme } from './ThemeProvider';
 import { radius } from './theme';
+import { APP_BASE } from './artAssets';
 
 function webStyle(style: Record<string, unknown>) {
   return Platform.OS === 'web' ? (style as any) : undefined;
 }
 
 const heroArt = {
-  mythicForge: '/vitalquest-app/art/today-mythic-premium.svg',
-  celestialPulse: '/vitalquest-app/art/today-celestial-premium.webp',
-  titanCore: '/vitalquest-app/art/today-titan-premium.webp',
+  mythicForge: `${APP_BASE}/art/today-mythic-premium.svg`,
+  celestialPulse: `${APP_BASE}/art/today-celestial-premium.webp`,
+  titanCore: `${APP_BASE}/art/today-titan-premium.webp`,
 } as const;
 
 const iconPaths = {

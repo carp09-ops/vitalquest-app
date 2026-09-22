@@ -1,4 +1,6 @@
-import { evaluateXPTrust, type VerificationEvidence, type XPTrustResult } from '../xpTrust'
+import { type VerificationEvidence, type XPTrustResult } from '../xpTrust'
+import { applyRules, adjudicate } from './scoring'
+import { defaultRules, type ScoringRule } from './rules'
 import type { TrustSessionInput, TrustVerifier } from './types'
 
 /**
@@ -19,17 +21,27 @@ function mergeEvidences(parts: { evidence: Partial<VerificationEvidence>; priori
   return merged as VerificationEvidence
 }
 
+export interface RuleBreakdown {  id: string
+  delta: number
+  reasons: string[]
+}
+
+export interface TrustPipelineDetail extends XPTrustResult {
+  ruleBreakdown: RuleBreakdown[]
+  baseScore: number
+}
+
 /**
- * Collect → merge → score. The scorer (evaluateXPTrust) is intentionally
- * untouched: this slice only changes how evidence is gathered and combined.
- * A verifier that throws is isolated — it contributes nothing rather than
- * failing the whole session.
+ * Full-fidelity run: same result as runTrustPipeline, plus the per-rule
+ * breakdown. This is the "why did I get this score?" view — it only exists
+ * because scoring is now discrete rules.
  */
-export async function runTrustPipeline(
+export async function runTrustPipelineDetailed(
   rawXP: number,
   session: TrustSessionInput,
   verifiers: TrustVerifier[],
-): Promise<XPTrustResult> {
+  rules: ScoringRule[] = defaultRules,
+): Promise<TrustPipelineDetail> {
   const settled = await Promise.all(
     verifiers.map(async (v) => {
       try {
@@ -39,5 +51,27 @@ export async function runTrustPipeline(
       }
     }),
   )
-  return evaluateXPTrust(rawXP, mergeEvidences(settled))
+  const evidence = mergeEvidences(settled)
+  let baseScore = 0
+  const ruleBreakdown: RuleBreakdown[] = []
+  const reasons: string[] = []
+  for (const rule of rules) {
+    const r = rule.score(evidence)
+    baseScore += r.delta
+    ruleBreakdown.push({ id: rule.id, delta: r.delta, reasons: r.reasons })
+    reasons.push(...r.reasons)
+  }
+  return { ...adjudicate(rawXP, baseScore, reasons, evidence), ruleBreakdown, baseScore }
+}
+
+/**
+ * Convenience wrapper returning just the XPTrustResult.
+ */
+export async function runTrustPipeline(
+  rawXP: number,
+  session: TrustSessionInput,
+  verifiers: TrustVerifier[],
+  rules: ScoringRule[] = defaultRules,
+): Promise<XPTrustResult> {
+  return runTrustPipelineDetailed(rawXP, session, verifiers, rules)
 }

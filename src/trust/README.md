@@ -27,16 +27,17 @@ runTrustPipeline(rawXP, session, verifiers[])
   takes a stub DB in tests).
 - `sensorVerifiers.ts` — adapter making the existing HealthKit collector a
   verifier. Native code untouched.
-- `pipeline.ts` — the three-stage pipeline.
+- `pipeline.ts` — `runTrustPipeline` / `runTrustPipelineDetailed`
+  (collect → merge → score → adjudicate).
+- `rules.ts` — the scorer decomposed into 10 composable `ScoringRule`s, extracted
+  1:1 from `evaluateXPTrust`. Demo output is byte-identical before/after.
+- `scoring.ts` — `applyRules` + `adjudicate` (tier/multiplier thresholds).
 - `demo.ts` — runnable proof. `npx tsc` then `node` on the compiled output.
 
 Run it: `npx tsc --outDir /tmp/trust-demo && node /tmp/trust-demo/src/trust/demo.js`
 
 ## What's intentionally not done
 
-- The scorer (`evaluateXPTrust`) is still one big function. The natural follow-up
-  is decomposing it into composable `ScoringRule`s — same plug-in idea, applied
-  to scoring. Left out to keep the slice reviewable.
 - GPS capture is session-scoped (it wraps a live `watchPositionAsync`), so a GPS
   verifier would wrap an already-captured result rather than collect post-hoc.
 - No server-side adjudication yet — this stays client-side, same as today.

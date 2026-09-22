@@ -23,7 +23,8 @@
           "healthUpdatePermission": false,
           "isBackgroundDeliveryEnabled": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

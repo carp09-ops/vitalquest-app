@@ -1,3 +1,4 @@
+import { fonts } from './designSystem';
 import React,{useEffect,useRef} from 'react';
 import { Animated,Easing,Image,ImageBackground,Platform,StyleSheet,Text,View,useWindowDimensions } from 'react-native';
 import { useReducedMotion } from './Interaction';
@@ -73,10 +74,10 @@ const styles=StyleSheet.create({
   logoDisc:{width:92,height:92,borderRadius:46,backgroundColor:'rgba(5,7,9,.72)',borderWidth:1,borderColor:'rgba(245,231,205,.18)',alignItems:'center',justifyContent:'center'},
   logo:{width:72,height:72},
   wordmark:{color:'#F6F0E7',fontSize:25,fontWeight:'700',letterSpacing:6.5,textAlign:'center',marginTop:16,textShadowColor:'rgba(0,0,0,.60)',textShadowRadius:12},
-  tagline:{color:'rgba(235,218,189,.72)',fontSize:7,fontWeight:'800',letterSpacing:3,marginTop:7},
+  tagline:{color:'rgba(235,218,189,.72)',fontSize:9,fontWeight:'800',letterSpacing:3,marginTop:7},
   statusBlock:{width:'100%',maxWidth:520,alignItems:'center',marginBottom:38},
   progressRail:{width:88,height:3,borderRadius:99,overflow:'hidden',backgroundColor:'rgba(255,255,255,.12)'},
   progressGlow:{position:'absolute',left:0,top:0,bottom:0,width:'42%',borderRadius:99,backgroundColor:'#E7C488',shadowColor:'#E7C488',shadowOpacity:.8,shadowRadius:7},
-  statusText:{color:'#F6F0E7',fontFamily:Platform.select({ios:'Georgia',default:'serif'}),fontSize:20,textAlign:'center',marginTop:18},
-  statusSub:{color:'rgba(247,248,250,.48)',fontSize:6.5,fontWeight:'900',letterSpacing:1.8,marginTop:8,textAlign:'center'}
+  statusText:{color:'#F6F0E7',fontFamily:fonts.display,fontSize:20,textAlign:'center',marginTop:18},
+  statusSub:{color:'rgba(247,248,250,.48)',fontSize:9,fontWeight:'900',letterSpacing:1.8,marginTop:8,textAlign:'center'}
 });

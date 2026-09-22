@@ -1,3 +1,4 @@
+import { fonts } from './designSystem';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   wordmark: {
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 26,
     fontWeight: '900',
     letterSpacing: -0.4,
@@ -552,7 +553,7 @@ const styles = StyleSheet.create({
   heroCopyWide: { padding: 30, paddingBottom: 36 },
   heroKicker: { fontSize: 9, fontWeight: '900', letterSpacing: 1.8, marginBottom: 8 },
   heroTitle: {
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 42,
     lineHeight: 46,
     fontWeight: '900',
@@ -592,7 +593,7 @@ const styles = StyleSheet.create({
   levelNumber: { fontSize: 26, lineHeight: 28, fontWeight: '900' },
   identityCopy: { flex: 1, minWidth: 0 },
   identityClass: {
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 19,
     fontWeight: '800',
   },
@@ -604,7 +605,7 @@ const styles = StyleSheet.create({
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   statPlate: { width: '48.7%', minHeight: 106, borderWidth: 1, borderRadius: 12, padding: 10 },
   statLabel: { fontSize: 7, fontWeight: '900', letterSpacing: 1.1, marginTop: 5 },
-  statValue: { fontSize: 24, lineHeight: 27, fontWeight: '900', marginTop: 1 },
+  statValue: { fontVariant:['tabular-nums'],fontSize: 24, lineHeight: 27, fontWeight: '900', marginTop: 1 },
   statTrack: { marginTop: 7, height: 4, borderRadius: 99, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,.08)' },
   statFill: { height: '100%', borderRadius: 99 },
   miniMetrics: { flexDirection: 'row', gap: 8 },
@@ -630,7 +631,7 @@ const styles = StyleSheet.create({
   moduleChipText: { fontSize: 8, fontWeight: '900', letterSpacing: 1.35 },
   moduleBody: { padding: 16 },
   moduleTitle: {
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 28,
     lineHeight: 31,
     fontWeight: '900',
@@ -655,7 +656,7 @@ const styles = StyleSheet.create({
   questCopy: { flex: 1 },
   questTitle: {
     marginTop: 3,
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 21,
     fontWeight: '800',
   },
@@ -690,7 +691,7 @@ const styles = StyleSheet.create({
   sectionEyebrow: { fontSize: 8, fontWeight: '900', letterSpacing: 1.5 },
   sectionTitle: {
     marginTop: 4,
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 24,
     fontWeight: '800',
   },
@@ -729,7 +730,7 @@ const styles = StyleSheet.create({
   manifestoText: {
     maxWidth: 760,
     marginTop: 6,
-    fontFamily: Platform.select({ ios: 'Georgia', default: 'serif' }),
+    fontFamily: fonts.display,
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '700',

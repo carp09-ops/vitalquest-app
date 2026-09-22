@@ -7,7 +7,7 @@ import RecoveryEncounterV2 from './RecoveryEncounterV2';
 import { templates } from './data';
 import { trainingArtForArchetype } from './artAssets';
 import { useHeroArchetype } from './useHeroArchetype';
-import { materialForArchetype,paletteForArchetype } from './designSystem';
+import { materialForArchetype, paletteForArchetype, fonts } from './designSystem';
 
 const ENCOUNTER_COPY:Record<string,{kicker:string;title:string;sub:string}>={
   push:{kicker:'STRENGTH ENCOUNTER',title:'Enter the Pressing Hall',sub:'Every completed set becomes evidence. Load, control and work density shape the reward.'},
@@ -42,7 +42,7 @@ export default function WorkoutExperienceV3(){
   </View>;
 }
 
-const serif=Platform.select({ios:'Georgia',default:'serif'});
+const serif=fonts.display;
 const styles=StyleSheet.create({
   root:{flex:1,backgroundColor:'#03070A'},
   hero:{height:230,justifyContent:'flex-end',overflow:'hidden'},
@@ -51,7 +51,7 @@ const styles=StyleSheet.create({
   edge:{position:'absolute',left:0,right:0,bottom:0,height:2},
   heroInner:{paddingHorizontal:18,paddingBottom:18,maxWidth:1120,width:'100%',alignSelf:'center'},
   chapter:{alignSelf:'flex-start',borderWidth:1,borderRadius:999,paddingHorizontal:10,paddingVertical:6,marginBottom:9},
-  chapterText:{fontSize:7,fontWeight:'900',letterSpacing:1.15},
+  chapterText:{fontSize:9,fontWeight:'900',letterSpacing:1.15},
   kicker:{fontSize:8,fontWeight:'900',letterSpacing:1.45},
   title:{fontFamily:serif,fontSize:31,lineHeight:35,fontWeight:'800',color:'#FFF9EE',marginTop:4,textShadowColor:'rgba(0,0,0,.6)',textShadowRadius:12},
   sub:{fontSize:10,lineHeight:15,color:'rgba(247,248,250,.74)',maxWidth:640,marginTop:5},

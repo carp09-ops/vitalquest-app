@@ -101,6 +101,18 @@ export const typography = {
   label: { letterSpacing: .8 },
 } as const;
 
+// Loaded via expo-font in app/_layout.tsx. Display = carved-fantasy serif for
+// headlines; UI = grotesque for kickers, buttons and data labels.
+export const fonts = {
+  display: 'Cinzel_800ExtraBold',
+  displayBold: 'Cinzel_700Bold',
+  ui: 'Inter_400Regular',
+  uiMedium: 'Inter_500Medium',
+  uiSemi: 'Inter_600SemiBold',
+  uiBold: 'Inter_700Bold',
+  uiBlack: 'Inter_800ExtraBold',
+} as const;
+
 export const premiumRadius = {
   control: 12,
   card: 18,

@@ -9,6 +9,13 @@ export interface TrustSaveInput {
   durationMinutes: number
   totalVolume: number
   verificationEvidence?: VerificationEvidence
+  /**
+   * Persisted set rows. Set cadence is derived from these — never from
+   * caller-computed fields — so a caller cannot inflate its own score.
+   * Only rows with a real completedAt are used: missing timestamps must
+   * never look like rushing (see the data-loss case in the tests).
+   */
+  sets?: Array<{ completedAt?: string | null }>
 }
 
 type MinimalDb = { getAllAsync: (sql: string) => Promise<unknown[]> }
@@ -51,10 +58,16 @@ export function sessionSaveVerifiers(
 
 /**
  * Builds the pipeline session input from the save input.
- * Only node-safe scalar fields are mapped; caller-supplied evidence
- * (set timestamps, cadence, overrides) flows through session_override.
+ * Set timestamps are derived from the persisted set rows — only rows with a
+ * real completedAt count, so missing data can never look like rushing.
+ * Callers no longer send cadence fields; if a future caller does, the
+ * session_override verifier (priority 2) still takes precedence over the
+ * derived values (priority 1) as an explicit, auditable override.
  */
 export function sessionSaveTrustInput(input: TrustSaveInput, modality: ActivityModality): TrustSessionInput {
+  const stamps = (input.sets ?? [])
+    .map((set) => set.completedAt)
+    .filter((value): value is string => Boolean(value))
   return {
     modality,
     startedAt: input.startedAt,
@@ -64,5 +77,6 @@ export function sessionSaveTrustInput(input: TrustSaveInput, modality: ActivityM
     totalVolume: input.totalVolume,
     distanceMiles: input.verificationEvidence?.distanceMiles,
     avgPaceSeconds: input.verificationEvidence?.avgPaceSeconds,
+    setTimestamps: stamps.length ? stamps : undefined,
   }
 }

@@ -48,6 +48,29 @@ Run it: `npx tsc --outDir /tmp/trust-demo && node /tmp/trust-demo/src/trust/demo
 - `sessionIntegrity.test.ts` — duplicate/clock detection on the existing module
 - `xpTrust.test.ts` — golden values for the untouched original scorer
 
+## Cadence is derived, not declared (2026-09-22)
+
+Set cadence (`setTimestamps` → coverage, median gap) is derived inside the
+pipeline from the persisted set rows (`sessionSaveTrustInput`), not from
+caller-computed `verificationEvidence` fields. The workout screens no longer
+send `setTimestamps` / `medianSetGapSeconds` / `cadenceCoverage`; they pass
+raw per-set `completedAt` (nullable) and the `?? completedAt` fallback for
+persistence stays at the `exercise_sets` INSERT in `db.ts`.
+
+Rules of the derivation, pinned by `cadenceDerivation.test.ts`:
+
+- Only rows with a **real** `completedAt` count. Missing timestamps are
+  ignored — they must never look like rushing (no false positives on bulk
+  logs or data loss).
+- Honest sessions score identically to the old caller-computed path.
+- A caller that lies about cadence can no longer inflate its score
+  (bodyweight case: 90 VERIFIED → 59 TRACKED, −30 XP).
+- Timestamped manual entries now earn their cadence bonus automatically
+  (60 TRACKED → 77 CORROBORATED, +30 XP).
+- If a future caller does send cadence fields, `session_override`
+  (priority 2) still wins over the derived values (priority 1) — an
+  explicit, auditable override.
+
 ## What's intentionally not done
 
 - GPS capture is session-scoped (it wraps a live `watchPositionAsync`), so a GPS

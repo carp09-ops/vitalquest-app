@@ -144,7 +144,7 @@ function withResistanceSupportGains(input:BaseSession,gains:BankedAttributeGain[
   return next;
 }
 
-async function writeSessionBase(db:SQLiteDatabase,input:BaseSession):Promise<SessionSaveResult>{
+async function writeSessionBase(db:SQLiteDatabase,input:BaseSession&{sets?:Array<{completedAt?:string|null}>}):Promise<SessionSaveResult>{
   const modality=defaultModality(input.templateId);
   const trust=await runTrustPipelineDetailed(input.totalXP,sessionSaveTrustInput(input,modality),[...sessionSaveVerifiers(db,input,modality),healthKitVerifier]);
   const ledger=trust.evidence as VerificationEvidence&Partial<IntegrityLedgerFields>;

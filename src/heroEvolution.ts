@@ -96,6 +96,14 @@ export const HERO_ARCHETYPES: Record<HeroArchetype, {
 export const ATTRIBUTE_THRESHOLDS = [0, 100, 250, 500, 900] as const;
 export const FORM_LEVELS = [1, 5, 9, 13, 17] as const;
 
+export const ATTRIBUTE_TIER_TITLES: Record<HeroAttribute, readonly [string, string, string, string, string]> = {
+  strength: ['Untrained', 'Conditioned', 'Powerful', 'Elite', 'Mythic'],
+  stamina: ['Winded', 'Steady', 'Enduring', 'Tireless', 'Inexhaustible'],
+  agility: ['Stiff', 'Nimble', 'Explosive', 'Elusive', 'Untouchable'],
+  vitality: ['Drained', 'Mending', 'Vibrant', 'Radiant', 'Evergreen'],
+  discipline: ['Drifter', 'Committed', 'Disciplined', 'Unyielding', 'Legendary'],
+};
+
 export const ATTRIBUTE_VISUALS: Record<HeroArchetype, Record<HeroAttribute, readonly [string, string, string, string, string]>> = {
   mystic: {
     strength: ['Dormant power', 'Runed arms', 'Reinforced armor', 'Guardian strength', 'Titanic arcane presence'],
@@ -169,6 +177,33 @@ function attributeXP(snapshot: ProgressionSnapshot): Record<HeroAttribute, numbe
   };
 }
 
+export interface AttributeTierUp {
+  attribute: HeroAttribute;
+  fromTier: HeroTier;
+  toTier: HeroTier;
+  title: string;
+}
+
+const isHeroAttribute = (value: string): value is HeroAttribute => value in ATTRIBUTE_TIER_TITLES;
+
+export function detectAttributeTierUps(
+  before: Record<HeroAttribute, number>,
+  gains: Array<{ attribute: string; amount: number }>,
+): AttributeTierUp[] {
+  const result: AttributeTierUp[] = [];
+  for (const gain of gains) {
+    if (!isHeroAttribute(gain.attribute)) continue;
+    const amount = Math.max(0, Math.floor(gain.amount));
+    if (amount <= 0) continue;
+    const fromTier = attributeTierForXP(before[gain.attribute] ?? 0);
+    const toTier = attributeTierForXP((before[gain.attribute] ?? 0) + amount);
+    if (toTier > fromTier) {
+      result.push({ attribute: gain.attribute, fromTier, toTier, title: ATTRIBUTE_TIER_TITLES[gain.attribute][toTier - 1] });
+    }
+  }
+  return result;
+}
+
 export function deriveHeroEvolution(snapshot: ProgressionSnapshot, archetype: HeroArchetype = 'mystic') {
   const config = HERO_ARCHETYPES[archetype];
   const formTier = formTierForLevel(snapshot.level);
@@ -179,12 +214,13 @@ export function deriveHeroEvolution(snapshot: ProgressionSnapshot, archetype: He
     result[attribute] = {
       xp: xp[attribute],
       tier,
+      tierTitle: ATTRIBUTE_TIER_TITLES[attribute][tier - 1],
       visual: ATTRIBUTE_VISUALS[archetype][attribute][tier - 1],
       nextThreshold,
       xpToNext: nextThreshold == null ? 0 : Math.max(0, nextThreshold - xp[attribute]),
     };
     return result;
-  }, {} as Record<HeroAttribute, { xp: number; tier: HeroTier; visual: string; nextThreshold: number | null; xpToNext: number }>);
+  }, {} as Record<HeroAttribute, { xp: number; tier: HeroTier; tierTitle: string; visual: string; nextThreshold: number | null; xpToNext: number }>);
 
   const dominantAttribute = (Object.keys(attributes) as HeroAttribute[]).sort((a, b) => {
     const normalizedA = attributes[a].tier * 1000 + attributes[a].xp;

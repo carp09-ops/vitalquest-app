@@ -15,6 +15,7 @@ import { materialForArchetype,paletteForArchetype } from './designSystem';
 import { deriveHeroEvolution } from './heroEvolution';
 import BrandLoadingScreen from './BrandLoadingScreen';
 import DataStatePanel from './DataStatePanel';
+import AttributeStrip from './AttributeStrip';
 import { heroArtForArchetype } from './artAssets';
 
 export default function TodayV3(){
@@ -72,6 +73,8 @@ export default function TodayV3(){
         </View>
       </View>
     </ImageBackground></Entrance>
+
+    <Entrance delay={60}><AttributeStrip snapshot={snapshot} archetype={archetype}/></Entrance>
 
     {block?<Entrance delay={75}><View style={[styles.arcBand,{borderColor:material.edgeStrong,backgroundColor:material.railSurface}]}>
       <View style={styles.arcTop}><View><Text style={[styles.kicker,{color:palette.highlight}]}>ACTIVE ARC · WEEK {block.week}/{block.totalWeeks}</Text><Text style={styles.arcTitle}>{block.goalLabel}</Text><Text style={styles.arcMeta}>{block.title} · {block.phase}</Text></View><View style={styles.arcScore}><Text style={styles.arcScoreValue}>{block.scorecard.adherence}%</Text><Text style={styles.micro}>ADHERENCE</Text></View></View>

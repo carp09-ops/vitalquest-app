@@ -36,6 +36,18 @@ runTrustPipeline(rawXP, session, verifiers[])
 
 Run it: `npx tsc --outDir /tmp/trust-demo && node /tmp/trust-demo/src/trust/demo.js`
 
+## Tests
+
+`npm test` (vitest). 63 tests across 6 files in `src/trust/__tests__/`:
+
+- `rules.test.ts` — every scoring rule in isolation, including boundary values
+- `scoring.test.ts` — tier/multiplier bands, confidence clamping, XP split
+- `pipeline.test.ts` — merge precedence, failing-verifier isolation, custom rule
+  sets, and **equivalence with the original `evaluateXPTrust`** on full sessions
+- `verifiers.test.ts` — evidence each verifier produces
+- `sessionIntegrity.test.ts` — duplicate/clock detection on the existing module
+- `xpTrust.test.ts` — golden values for the untouched original scorer
+
 ## What's intentionally not done
 
 - GPS capture is session-scoped (it wraps a live `watchPositionAsync`), so a GPS

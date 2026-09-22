@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { ImageBackground,Platform,SafeAreaView,ScrollView,StyleSheet,Text,useWindowDimensions,View } from 'react-native';
 import { templates } from './data';
-import { ActionPressable,Entrance } from './Interaction';
+import { ActionPressable,AnimatedBar,Entrance } from './Interaction';
 import { getTrainingRecommendation } from './recommendation';
 import { useProgressionSnapshot } from './useProgression';
 import { useTrainingIntelligence } from './useTrainingIntelligence';
@@ -44,7 +44,7 @@ export default function TodayV3(){
 
         <View style={[styles.levelCrest,{borderColor:palette.highlight,backgroundColor:'rgba(2,6,10,.72)'}]}>
           <Text style={styles.levelLabel}>LEVEL</Text><Text style={styles.levelValue}>{snapshot.level}</Text><Text style={[styles.levelPct,{color:palette.highlight}]}>{levelPct}% TO NEXT</Text>
-          <View style={styles.levelTrack}><View style={[styles.levelFill,{width:`${levelPct}%`,backgroundColor:palette.primary}]}/></View>
+          <AnimatedBar progress={levelPct/100} color={palette.primary} trackStyle={styles.levelTrack} barStyle={styles.levelFill}/>
         </View>
       </View>
 
@@ -78,7 +78,7 @@ export default function TodayV3(){
 
     {block?<Entrance delay={75}><View style={[styles.arcBand,{borderColor:material.edgeStrong,backgroundColor:material.railSurface}]}>
       <View style={styles.arcTop}><View><Text style={[styles.kicker,{color:palette.highlight}]}>ACTIVE ARC · WEEK {block.week}/{block.totalWeeks}</Text><Text style={styles.arcTitle}>{block.goalLabel}</Text><Text style={styles.arcMeta}>{block.title} · {block.phase}</Text></View><View style={styles.arcScore}><Text style={styles.arcScoreValue}>{block.scorecard.adherence}%</Text><Text style={styles.micro}>ADHERENCE</Text></View></View>
-      <View style={styles.track}><View style={[styles.fill,{width:`${Math.min(100,Math.max(0,block.weeklyProgress*100))}%`,backgroundColor:palette.primary}]}/></View>
+      <AnimatedBar progress={Math.min(1,Math.max(0,block.weeklyProgress))} color={palette.primary} trackStyle={styles.track} barStyle={styles.fill}/>
       <View style={styles.campaignRow}>{nextSlots.map(slot=><View key={slot.day} style={[styles.campaignNode,{borderColor:slot.status==='NEXT'?material.edgeStrong:material.edge,backgroundColor:slot.status==='NEXT'?material.glow:'rgba(4,8,12,.44)'}]}><Text style={[styles.campaignDay,{color:slot.status==='NEXT'?palette.highlight:'rgba(247,248,250,.48)'}]}>{slot.label}</Text><Text style={styles.campaignTitle}>{slot.title}</Text>{slot.status==='NEXT'?<Text style={[styles.nextMarker,{color:palette.highlight}]}>NEXT</Text>:null}</View>)}</View>
     </View></Entrance>:null}
 

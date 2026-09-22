@@ -28,10 +28,10 @@ export default function TabLayout() {
   if(gate==='checking')return <BrandLoadingScreen variant="launch" message="PREPARING VITALQUEST"/>;
   return <View style={[styles.world,{backgroundColor:'#05070A'}]}><WorldArt archetype={archetype} strength="soft" position="top" /><View pointerEvents="none" style={[styles.ambientTop,landscapeDock&&styles.ambientTopWide]}/><View pointerEvents="none" style={[styles.ambientBottom,landscapeDock&&styles.ambientBottomWide]}/><Tabs screenOptions={{headerShown:false,sceneStyle:{backgroundColor:'transparent'},tabBarHideOnKeyboard:true,tabBarStyle:[styles.tabBar,landscapeDock&&styles.tabBarWide,shortLandscape&&styles.tabBarShort,{backgroundColor:t.navBackground,borderColor:`${t.text}18`},Platform.OS==='web'?({boxShadow:'0 20px 64px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.065)',backdropFilter:'blur(34px) saturate(1.08)'} as any):null],tabBarActiveTintColor:t.text,tabBarInactiveTintColor:t.muted,tabBarItemStyle:[styles.item,shortLandscape&&styles.itemShort],tabBarLabelStyle:[styles.label,shortLandscape&&styles.labelShort]}}>
     <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: ({ focused }) => <NavIcon name="index" focused={focused} accent={accent} /> }} />
-    <Tabs.Screen name="train" options={{ title: 'Training', tabBarIcon: ({ focused }) => <NavIcon name="train" focused={focused} accent={accent} /> }} />
-    <Tabs.Screen name="quests" options={{ title: 'Goals', tabBarIcon: ({ focused }) => <NavIcon name="quests" focused={focused} accent={accent} /> }} />
-    <Tabs.Screen name="armory" options={{ title: 'Rewards', tabBarIcon: ({ focused }) => <NavIcon name="armory" focused={focused} accent={accent} /> }} />
-    <Tabs.Screen name="hero" options={{ title: 'Progress', tabBarIcon: ({ focused }) => <NavIcon name="hero" focused={focused} accent={accent} /> }} />
+    <Tabs.Screen name="train" options={{ title: 'Trials', tabBarIcon: ({ focused }) => <NavIcon name="train" focused={focused} accent={accent} /> }} />
+    <Tabs.Screen name="quests" options={{ title: 'Quests', tabBarIcon: ({ focused }) => <NavIcon name="quests" focused={focused} accent={accent} /> }} />
+    <Tabs.Screen name="armory" options={{ title: 'Armory', tabBarIcon: ({ focused }) => <NavIcon name="armory" focused={focused} accent={accent} /> }} />
+    <Tabs.Screen name="hero" options={{ title: 'Hero', tabBarIcon: ({ focused }) => <NavIcon name="hero" focused={focused} accent={accent} /> }} />
   </Tabs></View>;
 }
 

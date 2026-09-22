@@ -40,7 +40,7 @@ export default function TrainV3(){
   if(error)return <SafeAreaView style={[s.safe,{backgroundColor:t.background}]}><View style={s.state}><DataStatePanel kind="error" title="Training couldn’t load" copy={error} actionLabel="Try again" onAction={()=>void refresh()} icon="strength"/></View></SafeAreaView>;
 
   return <SafeAreaView style={[s.safe,{backgroundColor:'transparent'}]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[s.page,wide&&s.pageWide]}><View style={s.shell}>
-    <Entrance><View style={s.header}><Text style={[s.kicker,{color:palette.highlight}]}>TRAINING · {material.motif}</Text><Text style={[s.title,compact&&s.titleCompact,{color:t.text}]}>Choose your trial.</Text><Text style={[s.lede,{color:t.muted}]}>VitalQuest adapts the next session to your Arc, readiness, history and available equipment.</Text></View></Entrance>
+    <Entrance><View style={s.header}><Text style={[s.kicker,{color:palette.highlight}]}>TRIALS · {material.motif}</Text><Text style={[s.title,compact&&s.titleCompact,{color:t.text}]}>Choose your trial.</Text><Text style={[s.lede,{color:t.muted}]}>VitalQuest adapts the next session to your Arc, readiness, history and available equipment.</Text></View></Entrance>
 
     <Entrance delay={40}><View style={[s.hero,{borderColor:material.edgeStrong}]}>
       <ImageBackground source={{uri:trainingArtForArchetype(archetype)}} resizeMode="cover" style={s.heroImage} imageStyle={s.heroImageRadius}>

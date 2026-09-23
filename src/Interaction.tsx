@@ -32,17 +32,24 @@ export function ActionPressable({children,onPress,onPressIn,onPressOut,disabled=
 }
 
 export function Entrance({children,delay=0,distance=12,style}:{children:ReactNode;delay?:number;distance?:number;style?:StyleProp<ViewStyle>}){  const reduced=useReducedMotion();
+  const [done,setDone]=useState(false);
   const opacity=useRef(new Animated.Value(reduced?1:0)).current;
   const translateY=useRef(new Animated.Value(reduced?0:distance)).current;
   const scale=useRef(new Animated.Value(reduced?1:.992)).current;
   useEffect(()=>{
-    if(reduced){opacity.setValue(1);translateY.setValue(0);scale.setValue(1);return}
-    Animated.parallel([
+    if(reduced){opacity.setValue(1);translateY.setValue(0);scale.setValue(1);setDone(true);return}
+    const anim=Animated.parallel([
       Animated.timing(opacity,{toValue:1,duration:360,delay,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
       Animated.timing(translateY,{toValue:0,duration:440,delay,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
       Animated.timing(scale,{toValue:1,duration:460,delay,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
-    ]).start();
+    ]);
+    anim.start(({finished})=>{if(finished)setDone(true)});
+    return()=>anim.stop();
   },[delay,distance,opacity,reduced,scale,translateY]);
+  // Once the entrance finishes, swap the animated wrapper for a plain View.
+  // A lingering (identity) transform on an ancestor of a ScrollView is a
+  // known iOS Safari touch-scroll breaker.
+  if(done)return <View style={style}>{children}</View>;
   return <Animated.View style={[style,{opacity,transform:[{translateY},{scale}]}]}>{children}</Animated.View>;
 }
 

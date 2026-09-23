@@ -10,6 +10,7 @@ import {firstSessionForGoal,saveOnboardingProfile,type TrainingExperience} from 
 import {paletteForArchetype,fonts} from './designSystem';
 import {IconArt,type VQIconName} from './IconArt';
 import BrandLoadingScreen from './BrandLoadingScreen';
+import {BrandWordmark} from './BrandWordmark';
 import {ART,heroArtForArchetype,worldArtForArchetype} from './artAssets';
 
 type Step=0|1|2|3|4;
@@ -45,7 +46,7 @@ export default function OnboardingV6(){
  if(saving)return <BrandLoadingScreen variant="calibrating" message="BUILDING YOUR FIRST ARC"/>;
  if(step===0)return <Welcome onStart={next}/>;
  if(step===1)return <Entrance><WorldStep archetype={archetype} pick={pickArchetype} onNext={next} onBack={back}/></Entrance>;
- if(step===2)return <Entrance><BaselineStep archetype={archetype} goal={goal} setGoal={setGoal} weeklyDays={weeklyDays} setWeeklyDays={setWeeklyDays} experience={experience} setExperience={setExperience} equipment={equipment} toggle={toggle} onNext={next} onBack={back}/></Entrance>;
+ if(step===2)return <Entrance><BaselineStep archetype={archetype} goal={goal} setGoal={setGoal} weeklyDays={weeklyDays} setWeeklyDays={setWeeklyDays} experience={experience} setExperience={setExperience} equipment={equipment} setEquipment={setEquipment} toggle={toggle} onNext={next} onBack={back}/></Entrance>;
  if(step===3)return <Entrance><TrialStep archetype={archetype} goal={goal} weeklyDays={weeklyDays} experience={experience} equipment={equipment} session={session} onFinish={finish} onBack={back} reset={Boolean(reset)}/></Entrance>;
  return <Ready archetype={archetype} templateId={session.templateId}/>;
 }
@@ -53,7 +54,7 @@ export default function OnboardingV6(){
 function Chrome({step,total,onBack}:{step:number;total:number;onBack?:()=>void}){
  return <View style={s.chrome}>
   {onBack?<Pressable onPress={onBack} hitSlop={14}><Text style={s.back}>‹</Text></Pressable>:<View style={{width:24}}/>}
-  <Text style={s.brand}>VITALQUEST</Text>
+  <BrandWordmark size={15}/>
   <Text style={s.stepLabel}>0{step} / 0{total}</Text>
  </View>;
 }
@@ -112,7 +113,7 @@ function WorldCard({id,active,onPress}:{id:HeroArchetype;active:boolean;onPress:
  </Pressable>;
 }
 
-function BaselineStep({archetype,goal,setGoal,weeklyDays,setWeeklyDays,experience,setExperience,equipment,toggle,onNext,onBack}:{archetype:HeroArchetype;goal:TrainingArcGoal;setGoal:(v:TrainingArcGoal)=>void;weeklyDays:3|4|5;setWeeklyDays:(v:3|4|5)=>void;experience:TrainingExperience;setExperience:(v:TrainingExperience)=>void;equipment:EquipmentId[];toggle:(id:EquipmentId)=>void;onNext:()=>void;onBack:()=>void}){
+function BaselineStep({archetype,goal,setGoal,weeklyDays,setWeeklyDays,experience,setExperience,equipment,setEquipment,toggle,onNext,onBack}:{archetype:HeroArchetype;goal:TrainingArcGoal;setGoal:(v:TrainingArcGoal)=>void;weeklyDays:3|4|5;setWeeklyDays:(v:3|4|5)=>void;experience:TrainingExperience;setExperience:(v:TrainingExperience)=>void;equipment:EquipmentId[];setEquipment:(v:EquipmentId[])=>void;toggle:(id:EquipmentId)=>void;onNext:()=>void;onBack:()=>void}){
  const p=paletteForArchetype(archetype);
  const pickGoal=(id:TrainingArcGoal)=>{hapticTap();setGoal(id)};
  const iconFor=(id:TrainingArcGoal):VQIconName=>id==='STRENGTH'?'strength':id==='CONDITIONING'?'stamina':id==='REBUILD'?'agility':'trophy';
@@ -125,8 +126,7 @@ function BaselineStep({archetype,goal,setGoal,weeklyDays,setWeeklyDays,experienc
    <View style={s.chips}>{([3,4,5] as const).map(v=><Pressable key={v} onPress={()=>{hapticTap();setWeeklyDays(v)}} style={[s.chip,{borderColor:weeklyDays===v?p.highlight:'rgba(255,255,255,.15)'}]}><Text style={[s.chipText,{color:weeklyDays===v?p.highlight:'#DDE2E8'}]}>{v} / WEEK</Text></Pressable>)}</View>
    <Text style={s.fieldLabel}>EXPERIENCE</Text>
    <View style={s.chips}>{EXPERIENCE.map(e=><Pressable key={e.id} onPress={()=>{hapticTap();setExperience(e.id)}} style={[s.chip,{borderColor:experience===e.id?p.highlight:'rgba(255,255,255,.15)'}]}><Text style={[s.chipText,{color:experience===e.id?p.highlight:'#DDE2E8'}]}>{e.label}</Text></Pressable>)}</View>
-   <Text style={s.fieldLabel}>YOUR EQUIPMENT</Text>
-   <View style={s.eqGrid}>{EQUIPMENT_OPTIONS.map(item=>{const active=equipment.includes(item.id);return <Pressable key={item.id} onPress={()=>toggle(item.id)} style={[s.eqCard,{borderColor:active?p.highlight:'rgba(255,255,255,.10)',backgroundColor:active?'rgba(215,165,55,.12)':PANEL}]}><IconArt name={EQ_ICON[item.id]} size={30} tint={active?p.highlight:'#F3F5F7'}/><Text style={[s.eqText,{color:active?p.highlight:'#F3F5F7'}]}>{EQ_LABEL[item.id]}</Text></Pressable>})}</View>
+   <EquipmentPicker archetype={archetype} equipment={equipment} toggle={toggle} setAll={(ids)=>{hapticTap();setEquipment(ids)}}/>
    <ActionPressable onPress={onNext} style={s.goldButton}><Text style={s.goldButtonText}>CONTINUE</Text></ActionPressable>
   </View>
  </ScrollView></SafeAreaView>;
@@ -173,6 +173,43 @@ function Ready({archetype,templateId}:{archetype:HeroArchetype;templateId:string
  </ImageBackground></SafeAreaView>;
 }
 
+const EQUIPMENT_GROUPS:Array<{title:string;hint:string;ids:EquipmentId[]}>=[
+ {title:'IRON',hint:'Loaded resistance',ids:['barbell','dumbbells','bench','rack','cables','machines']},
+ {title:'BODY',hint:'Functional strength',ids:['pullup','bodyweight']},
+ {title:'ENGINE',hint:'Conditioning',ids:['cardio']},
+];
+const ALL_EQUIPMENT=(Object.keys(EQ_ICON) as EquipmentId[]);
+
+function EquipmentPicker({archetype,equipment,toggle,setAll}:{archetype:HeroArchetype;equipment:EquipmentId[];toggle:(id:EquipmentId)=>void;setAll:(ids:EquipmentId[])=>void}){
+ const p=paletteForArchetype(archetype);
+ return <View style={s.eqSection}>
+  <View style={s.eqHeader}>
+   <View><Text style={s.fieldLabel}>YOUR EQUIPMENT</Text><Text style={s.eqCount}>{equipment.length} SELECTED</Text></View>
+   <View style={s.eqQuick}>
+    <Pressable onPress={()=>setAll(ALL_EQUIPMENT)} hitSlop={8}><Text style={[s.eqQuickText,{color:p.highlight}]}>FULL GYM</Text></Pressable>
+    <Text style={s.eqQuickDiv}>·</Text>
+    <Pressable onPress={()=>setAll(['bodyweight'])} hitSlop={8}><Text style={[s.eqQuickText,{color:p.highlight}]}>MINIMAL</Text></Pressable>
+   </View>
+  </View>
+  {EQUIPMENT_GROUPS.map((group,gi)=><View key={group.title} style={s.eqGroup}>
+   <View style={s.eqGroupHead}><Text style={[s.eqGroupTitle,{color:p.highlight}]}>{group.title}</Text><Text style={s.eqGroupHint}>{group.hint}</Text></View>
+   <View style={s.eqRows}>
+    {group.ids.map((id,ii)=>{const item=EQUIPMENT_OPTIONS.find(e=>e.id===id)!;const active=equipment.includes(id);return <Entrance key={id} delay={gi*70+ii*45}>
+     <Pressable onPress={()=>toggle(id)} style={[s.eqRow,{borderColor:active?p.highlight:'rgba(255,255,255,.10)',backgroundColor:active?'rgba(215,165,55,.10)':PANEL}]}>
+      <View style={[s.eqMedal,{borderColor:active?p.highlight:'rgba(255,255,255,.14)',backgroundColor:active?'rgba(215,165,55,.16)':'rgba(255,255,255,.03)'}]}>
+       <IconArt name={EQ_ICON[id]} size={26} tint={active?p.highlight:'#C9D0D8'}/>
+      </View>
+      <View style={{flex:1,gap:3}}><Text style={[s.eqName,{color:active?'#FFF':'#E8ECF0'}]}>{item.label}</Text><Text style={s.eqDesc} numberOfLines={2}>{item.description}</Text></View>
+      <View style={[s.eqSwitch,{borderColor:active?p.highlight:'rgba(255,255,255,.22)',backgroundColor:active?p.highlight:'rgba(255,255,255,.06)'}]}>
+       <View style={[s.eqKnob,{backgroundColor:active?'#171106':'#8A929C',transform:[{translateX:active?11:0}]}]}/>
+      </View>
+     </Pressable>
+    </Entrance>})}
+   </View>
+  </View>)}
+ </View>;
+}
+
 function Meta({value,label}:{value:string;label:string}){
  return <View style={s.meta}><Text style={s.metaValue}>{value}</Text><Text style={s.metaLabel}>{label}</Text></View>;
 }
@@ -216,9 +253,23 @@ const s=StyleSheet.create({
  chips:{flexDirection:'row',gap:8,flexWrap:'wrap'},
  chip:{borderWidth:1,borderRadius:999,paddingHorizontal:12,paddingVertical:10,backgroundColor:PANEL},
  chipText:{fontSize:9.5,fontWeight:'900'},
- eqGrid:{flexDirection:'row',flexWrap:'wrap',gap:10},
- eqCard:{width:'31%',aspectRatio:1,borderWidth:1,borderRadius:15,alignItems:'center',justifyContent:'center',gap:9},
- eqText:{fontSize:9,fontWeight:'900',textAlign:'center'},
+ eqSection:{gap:14,marginTop:8},
+ eqHeader:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-end'},
+ eqCount:{fontSize:9,fontWeight:'900',letterSpacing:1.2,color:'#E7B858',marginTop:4},
+ eqQuick:{flexDirection:'row',alignItems:'center',gap:8,paddingBottom:2},
+ eqQuickText:{fontSize:9,fontWeight:'900',letterSpacing:1},
+ eqQuickDiv:{color:'#5A636E',fontSize:12},
+ eqGroup:{gap:8},
+ eqGroupHead:{flexDirection:'row',alignItems:'baseline',gap:8,paddingHorizontal:2},
+ eqGroupTitle:{fontSize:10,fontWeight:'900',letterSpacing:2},
+ eqGroupHint:{fontSize:9,color:'#7C8590'},
+ eqRows:{gap:8},
+ eqRow:{flexDirection:'row',alignItems:'center',gap:13,borderWidth:1,borderRadius:16,padding:12},
+ eqMedal:{width:52,height:52,borderRadius:15,borderWidth:1,alignItems:'center',justifyContent:'center'},
+ eqName:{fontSize:13.5,fontWeight:'900',letterSpacing:.2},
+ eqDesc:{fontSize:9,lineHeight:14,color:'#9AA3AD'},
+ eqSwitch:{width:44,height:26,borderRadius:99,borderWidth:1.2,justifyContent:'center',paddingHorizontal:3},
+ eqKnob:{width:18,height:18,borderRadius:9},
  trialCard:{borderWidth:1.2,borderRadius:20,overflow:'hidden',backgroundColor:'#071019'},
  trialArt:{minHeight:380,justifyContent:'flex-end'},
  trialShade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(2,5,8,.45)'},

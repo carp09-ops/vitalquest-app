@@ -8,6 +8,7 @@ import { useHeroArchetype } from '../../src/useHeroArchetype';
 import WorldArt from '../../src/WorldArt';
 import { ART, tabArtForRoute } from '../../src/artAssets';
 import BrandLoadingScreen from '../../src/BrandLoadingScreen';
+import BuildTag from '../../src/BuildTag';
 import { shouldShowOnboarding } from '../../src/onboarding';
 import { useReducedMotion } from '../../src/Interaction';
 
@@ -43,7 +44,7 @@ export default function TabLayout() {
     <Tabs.Screen name="quests" options={{ title: 'Quests', tabBarIcon: ({ focused }) => <NavIcon name="quests" title="Quests" focused={focused} compact={shortLandscape} /> }} />
     <Tabs.Screen name="armory" options={{ title: 'Armory', tabBarIcon: ({ focused }) => <NavIcon name="armory" title="Armory" focused={focused} compact={shortLandscape} /> }} />
     <Tabs.Screen name="hero" options={{ title: 'Hero', tabBarIcon: ({ focused }) => <NavIcon name="hero" title="Hero" focused={focused} compact={shortLandscape} /> }} />
-  </Tabs></View>;
+  </Tabs><BuildTag/></View>;
 }
 
 const styles = StyleSheet.create({world:{flex:1,overflow:'hidden'},ambientTop:{position:'absolute',top:0,left:0,right:0,height:220,backgroundColor:'rgba(5,7,10,.08)'},ambientTopWide:{height:170,backgroundColor:'rgba(5,7,10,.04)'},ambientBottom:{position:'absolute',left:0,right:0,bottom:0,height:260,backgroundColor:'rgba(5,7,10,.50)'},ambientBottomWide:{height:210,backgroundColor:'rgba(5,7,10,.40)'},tabBar:{position:'absolute',left:16,right:16,bottom:14,height:96,borderWidth:1,borderTopWidth:1,borderRadius:24,paddingTop:8,paddingBottom:8,overflow:'hidden'},tabBarWide:{left:'50%',right:undefined,width:680,marginLeft:-340,height:96,bottom:16,borderRadius:22},tabBarShort:{height:74,width:620,marginLeft:-310,bottom:10,paddingTop:6,paddingBottom:6,borderRadius:20},item:{paddingTop:0},itemShort:{paddingTop:0},iconWrap:{height:80,alignItems:'center',justifyContent:'center'},iconWrapShort:{height:62},iconShell:{width:46,height:46,borderRadius:16,borderWidth:1.25,alignItems:'center',justifyContent:'center'},iconShellShort:{width:36,height:36,borderRadius:13},navLabel:{fontSize:8,fontWeight:'900',letterSpacing:1.35,textTransform:'uppercase',marginTop:6},navLabelShort:{fontSize:7.5,letterSpacing:1.2,marginTop:5},activeBar:{width:18,height:3,borderRadius:2,marginTop:4}});

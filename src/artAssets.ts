@@ -17,9 +17,31 @@ const HERO_ART={
   spartan:`${ART_BASE}/worlds/spartan/hero.webp`,
 } as const;
 
+const TAB_ART={
+  today:`${ART_BASE}/tabs/tab-today.webp`,
+  trials:`${ART_BASE}/tabs/tab-trials.webp`,
+  quests:`${ART_BASE}/tabs/tab-quests.webp`,
+  armory:`${ART_BASE}/tabs/tab-armory.webp`,
+  hero:`${ART_BASE}/tabs/tab-hero.webp`,
+} as const;
+
+export type TabArtKey=keyof typeof TAB_ART;
+
+/** Distinct world artwork per tab route: index->today, train->trials, etc. */
+export function tabArtForRoute(route:string|null|undefined):string{
+  switch(route){
+    case 'train':return TAB_ART.trials;
+    case 'quests':return TAB_ART.quests;
+    case 'armory':return TAB_ART.armory;
+    case 'hero':return TAB_ART.hero;
+    default:return TAB_ART.today;
+  }
+}
+
 export const ART={
   worlds:WORLD_ART,
   hero:HERO_ART,
+  tabArt:TAB_ART,
   loading:`${ART_BASE}/brand/loading-eclipse.webp`,
 
   // World-aware scene registries. New cinematic surfaces should use the helpers below.

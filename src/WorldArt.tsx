@@ -4,12 +4,20 @@ import type { HeroArchetype } from './heroEvolution';
 import { useReducedMotion } from './Interaction';
 import { worldArtForArchetype } from './artAssets';
 
-type Props={archetype:HeroArchetype;strength?:'soft'|'medium'|'strong';position?:'top'|'center'};
+type Props={archetype:HeroArchetype;strength?:'soft'|'medium'|'strong';position?:'top'|'center';artUri?:string};
 
-export default function WorldArt({archetype,strength='medium',position='center'}:Props){
+export default function WorldArt({archetype,strength='medium',position='center',artUri}:Props){
   const {width,height}=useWindowDimensions();
   const reduced=useReducedMotion();
   const drift=useRef(new Animated.Value(0)).current;
+  const uri=artUri??worldArtForArchetype(archetype);
+  const fade=useRef(new Animated.Value(1)).current;
+  const firstArt=useRef(true);
+  useEffect(()=>{
+    if(firstArt.current){firstArt.current=false;return}
+    fade.setValue(0);
+    Animated.timing(fade,{toValue:1,duration:reduced||Platform.OS==='web'?0:500,easing:Easing.out(Easing.cubic),useNativeDriver:true}).start();
+  },[uri,fade,reduced]);
   const tablet=width>=760;
   const landscape=width>height;
   const veil=strength==='soft' ? (tablet?.50:.62) : strength==='strong' ? (tablet?.24:.34) : (tablet?.38:.48);
@@ -34,7 +42,7 @@ export default function WorldArt({archetype,strength='medium',position='center'}
   const scale=drift.interpolate({inputRange:[0,1],outputRange:[baseScale,baseScale*(tablet?1.008:1.012)]});
 
   return <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-    <Animated.Image source={{uri:worldArtForArchetype(archetype)}} resizeMode="cover" style={[StyleSheet.absoluteFill,{transform:[{translateX},{translateY},{scale}]}]}/>
+    <Animated.Image source={{uri}} resizeMode="cover" style={[StyleSheet.absoluteFill,{opacity:fade,transform:[{translateX},{translateY},{scale}]}]}/>
     <View style={[StyleSheet.absoluteFill,{backgroundColor:`rgba(4,7,10,${veil})`}]}/>
     <View style={[styles.vignetteTop,{height:tablet?'26%':'34%',backgroundColor:strength==='strong'?'rgba(4,7,10,.05)':'rgba(4,7,10,.14)'}]}/>
     <View style={[styles.vignetteBottom,{height:tablet?'42%':'52%',backgroundColor:tablet?'rgba(4,7,10,.58)':'rgba(4,7,10,.70)'}]}/>

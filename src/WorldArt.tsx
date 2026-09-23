@@ -1,5 +1,5 @@
 import React,{useEffect,useRef} from 'react';
-import { Animated,Easing,StyleSheet,useWindowDimensions,View } from 'react-native';
+import { Animated,Easing,Platform,StyleSheet,useWindowDimensions,View } from 'react-native';
 import type { HeroArchetype } from './heroEvolution';
 import { useReducedMotion } from './Interaction';
 import { worldArtForArchetype } from './artAssets';
@@ -17,7 +17,10 @@ export default function WorldArt({archetype,strength='medium',position='center'}
   const baseScale=position==='top'?(tablet?(landscape?1.02:1.06):1.12):1.035;
 
   useEffect(()=>{
-    if(reduced){drift.stopAnimation();drift.setValue(0);return}
+    // On web, Animated has no native driver: the JS fallback would run a
+    // permanent rAF loop that competes with touch scrolling on iOS Safari.
+    // The drift is subtle ambience, so web renders the art statically.
+    if(reduced||Platform.OS==='web'){drift.stopAnimation();drift.setValue(0);return}
     const loop=Animated.loop(Animated.sequence([
       Animated.timing(drift,{toValue:1,duration:9000,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),
       Animated.timing(drift,{toValue:0,duration:9000,easing:Easing.inOut(Easing.sin),useNativeDriver:true}),

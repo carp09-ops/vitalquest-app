@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ImageBackground,Platform,Pressable,SafeAreaView,ScrollView,StyleSheet,Text,useWindowDimensions,View } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
 import { IconArt,VQIconName } from './IconArt';
 import { deriveHeroEvolution,HERO_ARCHETYPES,HeroAttribute,nextHeroFormMilestone } from './heroEvolution';
 import { useHeroArchetype } from './useHeroArchetype';
@@ -10,6 +11,9 @@ import { materialForArchetype, paletteForArchetype, fonts } from './designSystem
 import { heroArtForArchetype } from './artAssets';
 import { ATTRIBUTE_AURA, auraOpacityForTier } from './attributeAuras';
 import HeroInspect from './HeroInspect';
+import LegendTimeline from './LegendTimeline';
+import DayOneVsNow from './DayOneVsNow';
+import { getDayOneComparison, getLegendTimeline, type DayOneComparison, type LegendEntry } from './legend';
 import DataStatePanel from './DataStatePanel';
 import { AnimatedBar, Entrance } from './Interaction';
 
@@ -22,12 +26,24 @@ export default function HeroV3(){
  const attrs=(Object.keys(hero.attributes) as HeroAttribute[]).sort((a,b)=>hero.attributes[b].xp-hero.attributes[a].xp);const dominant=attrs[0];
  const dominantAura=ATTRIBUTE_AURA[dominant];const dominantTier=hero.attributes[dominant].tier;
  const [inspecting,setInspecting]=useState(false);
+ const db=useSQLiteContext();
+ const [legend,setLegend]=useState<LegendEntry[]|null>(null);
+ const [comparison,setComparison]=useState<DayOneComparison|null>(null);
+ useEffect(()=>{let active=true;
+   getLegendTimeline(db).then(entries=>{if(active)setLegend(entries)}).catch(()=>{if(active)setLegend([])});
+   getDayOneComparison(db).then(c=>{if(active)setComparison({...c,now:{...c.now,level:snapshot.level,streakDays:snapshot.streakDays}})}).catch(()=>{if(active)setComparison(null)});
+   return()=>{active=false};
+ },[db]);
  if(loading)return <SafeAreaView style={[s.safe,{backgroundColor:t.background}]}><View style={s.state}><DataStatePanel kind="loading" title="Loading your evolution" copy="Reading levels, attributes and lifetime progression." icon="xp"/></View></SafeAreaView>;
  if(error)return <SafeAreaView style={[s.safe,{backgroundColor:t.background}]}><View style={s.state}><DataStatePanel kind="error" title="Progress couldn’t load" copy={error} actionLabel="Try again" onAction={()=>void refresh()} icon="xp"/></View></SafeAreaView>;
  return <SafeAreaView style={[s.safe,{backgroundColor:'transparent'}]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[s.page,wide&&s.pageWide]}><View style={s.shell}>
   <Entrance><View><View style={s.headRow}><Text style={[s.kicker,{color:palette.highlight}]}>EVOLUTION</Text><Pressable onPress={()=>router.push('/verification')} style={s.verify}><Text style={s.verifyText}>CONNECT VERIFICATION</Text></Pressable></View><Text style={[s.title,compact&&s.titleCompact,{color:t.text}]}>Your work is becoming visible.</Text><Text style={[s.lede,{color:t.muted}]}>Level, form and attributes are the visual record of what consistent training has built.</Text></View></Entrance>
 
   <Entrance delay={40}><Pressable onPress={()=>setInspecting(true)} style={[s.hero,{borderColor:material.edgeStrong}]}><View pointerEvents="none" style={[s.auraEdge,{backgroundColor:dominantAura.aura,opacity:auraOpacityForTier(dominantTier)}]}/><View pointerEvents="none" style={s.inspectHint}><Text style={s.inspectHintText}>TAP TO INSPECT</Text></View><ImageBackground source={{uri:heroArtForArchetype(archetype)}} resizeMode="cover" style={s.heroImage} imageStyle={s.heroRadius}><View style={s.heroShade}/><View pointerEvents="none" style={[s.gradeVeil,{backgroundColor:dominantAura.grade}]}/><View style={[s.identity,{borderColor:material.edgeStrong,backgroundColor:'rgba(4,8,12,.78)'}]}><View style={s.identityTop}><View style={[s.levelSeal,{borderColor:palette.primary,backgroundColor:material.glow}]}><Text style={s.levelLabel}>LEVEL</Text><Text style={s.level}>{snapshot.level}</Text><Text style={[s.levelPct,{color:palette.highlight}]}>{Math.round(snapshot.levelRatio*100)}%</Text></View><View style={{flex:1}}><Text style={[s.kicker,{color:palette.highlight}]}>{hero.archetypeName.toUpperCase()} · FORM {hero.formTier}</Text><Text style={s.heroTitle}>{hero.title}</Text><View style={s.ascendantRow}><View style={[s.ascendantDot,{backgroundColor:dominantAura.aura}]}/><Text style={[s.ascendant,{color:dominantAura.aura}]}>{dominantAura.ascendantLabel} · TIER {dominantTier}</Text></View><Text style={s.heroCopy}>{hero.physique}</Text><Text style={s.heroGear}>{hero.gear}</Text></View></View><View style={s.identitySignals}><Signal label="DOMINANT" value={LABEL[dominant]}/><Signal label="FORM" value={`${hero.formTier} / 5`}/><Signal label="STREAK" value={`${snapshot.streakDays} DAYS`}/><Signal label="LIFETIME XP" value={snapshot.totalXP.toLocaleString()}/></View><AnimatedBar progress={Math.min(1,snapshot.levelRatio)} color={palette.primary} trackStyle={[s.track,{backgroundColor:'rgba(255,255,255,.12)'}]} barStyle={s.fill}/>{milestone?<Text style={s.nextLine}>{milestone.xpRemaining.toLocaleString()} XP TO {milestone.nextTitle.toUpperCase()}</Text>:<Text style={s.nextLine}>APEX FORM REACHED</Text>}</View></ImageBackground></Pressable></Entrance>
+
+  {comparison&&comparison.firstSession?<Entrance delay={60}><DayOneVsNow data={comparison} highlight={palette.highlight}/></Entrance>:null}
+
+  {legend?<Entrance delay={70}><LegendTimeline entries={legend} highlight={palette.highlight}/></Entrance>:null}
 
   <Entrance delay={80}><View><View style={s.sectionHead}><View><Text style={[s.kicker,{color:palette.highlight}]}>ATTRIBUTE PROFILE</Text><Text style={[s.sectionTitle,{color:t.text}]}>Your build.</Text></View><Text style={[s.small,{color:t.muted}]}>STRONGEST · {LABEL[dominant].toUpperCase()}</Text></View><View style={[s.attrGrid,wide&&s.attrGridWide]}>{attrs.map(key=>{const a=hero.attributes[key];const aura=ATTRIBUTE_AURA[key].aura;const max=Math.max(a.nextThreshold??a.xp,1);const pct=a.nextThreshold==null?100:Math.min(100,Math.round((a.xp/max)*100));return <View key={key} style={[s.attr,{borderColor:key===dominant?material.edgeStrong:material.edge,backgroundColor:key===dominant?material.elevatedSurface:material.railSurface}]}><View style={s.attrTop}><View style={[s.attrIcon,{borderColor:material.edge}]}><IconArt name={ICON[key]} size={30} tint={aura}/></View><View style={{flex:1}}><Text style={[s.attrName,{color:t.text}]}>{LABEL[key]}</Text><Text style={[s.small,{color:t.muted}]}>TIER {a.tier} · {a.tierTitle.toUpperCase()} · {a.xp.toLocaleString()} XP</Text></View><Text style={[s.attrPct,{color:key===dominant?aura:t.text}]}>{pct}%</Text></View><View style={s.pips}>{[1,2,3,4,5].map(i=><View key={i} style={[s.pip,{backgroundColor:i<=a.tier?aura:'rgba(255,255,255,.13)'}]}/>)}</View><Text style={[s.attrVisual,{color:t.muted}]}>{a.visual}</Text><AnimatedBar progress={pct/100} color={aura} trackStyle={[s.track,{backgroundColor:t.surfaceElevated}]} barStyle={s.fill}/></View>})}</View></View></Entrance>
 

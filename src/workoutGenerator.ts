@@ -1,11 +1,12 @@
 import { prescribeWorkingWeight } from './exercisePrescription';
+import type { LastWorkingSets } from './doubleProgression';
 import { ProgressionSnapshot } from './progression';
 import { EquipmentId, EXERCISE_CATALOG, equipmentSupports } from './trainingPreferences';
 import { TrainingIntelligence } from './trainingIntelligence';
 import { calculateSessionXP, XP_BALANCE } from './gameEngine';
 
 export type ForgeFocus = 'adaptive' | 'upper' | 'lower' | 'full';
-export type GeneratedExercise = {id:string;name:string;muscle:string;sets:number;reps:number;suggestedWeight:number|null;prescriptionRationale:string};
+export type GeneratedExercise = {id:string;name:string;muscle:string;sets:number;reps:number;suggestedWeight:number|null;prescriptionRationale:string;supersetGroup?:string};
 export type GeneratedWorkoutPlan = {id:string;name:string;focus:ForgeFocus;targetXP:number;projectedXP:number;estimatedMinutes:number;rationale:string;coachingNote:string;qualityScore:number;qualityLabel:'CALIBRATING'|'SOLID'|'STRONG'|'ELITE FIT';deload:boolean;exercises:GeneratedExercise[]};
 
 const FOCUS_IDS:Record<Exclude<ForgeFocus,'adaptive'>,string[]>={
@@ -21,7 +22,23 @@ function projectedSessionXP(sets:number,minutes:number,streakDays:number){return
 function qualityLabel(score:number):GeneratedWorkoutPlan['qualityLabel']{if(score>=90)return'ELITE FIT';if(score>=80)return'STRONG';if(score>=68)return'SOLID';return'CALIBRATING'}
 function scorePlan(args:{targetXP:number;projectedXP:number;exercises:GeneratedExercise[];snapshot:ProgressionSnapshot;intelligence?:TrainingIntelligence}){const xpFit=Math.max(0,40-Math.round(Math.abs(args.targetXP-args.projectedXP)/3));const historyDepth=Math.min(20,(args.intelligence?.recent.length??0)*2);const exerciseHistory=args.exercises.filter(ex=>args.intelligence?.exerciseInsights.some(i=>i.exerciseId===ex.id)).length;const familiarity=Math.min(20,exerciseHistory*4);const recoveryFit=args.snapshot.thisWeekResistanceWorkouts>=4&&args.snapshot.thisWeekRecoverySessions===0?5:15;return Math.min(100,xpFit+historyDepth+familiarity+recoveryFit)}
 
-export function generateWorkoutPlan(args:{targetXP:number;focus:ForgeFocus;snapshot:ProgressionSnapshot;intelligence?:TrainingIntelligence;equipment?:EquipmentId[]}):GeneratedWorkoutPlan{
+/**
+ * Pair consecutive non-compound accessories into supersets so accessory work
+ * runs back-to-back with no rest between the pair. Compounds always stay solo.
+ */
+function pairSupersets(exercises:GeneratedExercise[],selected:{compound:boolean}[]){
+  let groupCode=65; // 'A'
+  for(let i=0;i<exercises.length-1;i++){
+    if(selected[i].compound||selected[i+1].compound) continue;
+    if(exercises[i].supersetGroup||exercises[i+1].supersetGroup) continue;
+    const group=String.fromCharCode(groupCode++);
+    exercises[i].supersetGroup=group;
+    exercises[i+1].supersetGroup=group;
+    i++; // a pair consumes both slots
+  }
+}
+
+export function generateWorkoutPlan(args:{targetXP:number;focus:ForgeFocus;snapshot:ProgressionSnapshot;intelligence?:TrainingIntelligence;equipment?:EquipmentId[];lastSetsByExercise?:Record<string,LastWorkingSets>}):GeneratedWorkoutPlan{
   const maxXP=XP_BALANCE.resistance.sessionCap;
   const targetXP=Math.max(130,Math.min(maxXP,Math.round(args.targetXP)));const resolvedFocus=args.focus==='adaptive'?chooseAdaptiveFocus(args.snapshot,args.intelligence):args.focus;const deload=Boolean(args.intelligence?.deloadRecommended&&args.focus==='adaptive');
   const estimatedMinutes=deload?30:targetXP<=150?28:targetXP<=175?36:targetXP<=200?46:55;
@@ -30,7 +47,8 @@ export function generateWorkoutPlan(args:{targetXP:number;focus:ForgeFocus;snaps
   if(deload)desiredSets=Math.max(6,Math.round(desiredSets*.7));
   const equipment=args.equipment??[];const ids=FOCUS_IDS[resolvedFocus];let pool=EXERCISE_CATALOG.filter(item=>ids.includes(item.id)&&(!equipment.length||equipmentSupports(item.equipment,equipment)));if(pool.length<3){pool=EXERCISE_CATALOG.filter(item=>(resolvedFocus==='upper'?isUpper(item.id):resolvedFocus==='lower'?isLower(item.id):true)&&(!equipment.length||equipmentSupports(item.equipment,equipment)))}if(!pool.length)pool=EXERCISE_CATALOG.filter(item=>item.equipment.includes('bodyweight'));
   const exerciseCount=Math.max(1,Math.min(Math.min(6,pool.length),Math.ceil(desiredSets/4)));const historyOffset=args.intelligence?.generatedSessions??0;const rotation=pool.length?(args.snapshot.workoutCount+historyOffset)%pool.length:0;const selected=Array.from({length:exerciseCount},(_,index)=>pool[(rotation+index)%pool.length]);let remaining=desiredSets;
-  const exercises=selected.map((exercise,index)=>{const slots=selected.length-index;const sets=Math.max(2,Math.min(deload?3:5,Math.round(remaining/slots)));remaining-=sets;const compound=['bench','row','ohp','squat','rdl','leg-press'].includes(exercise.id);const trend=args.intelligence?.exerciseInsights.find(item=>item.exerciseId===exercise.id)?.volumeTrendPct??0;const reps=deload?(compound?8:10):compound?(trend<-8?8:targetXP>=200?6:8):10;const insight=args.intelligence?.exerciseInsights.find(item=>item.exerciseId===exercise.id);const prescription=prescribeWorkingWeight({insight,targetReps:reps});const suggestedWeight=deload&&prescription.suggestedWeight?Math.max(5,Math.round(prescription.suggestedWeight*.9/5)*5):prescription.suggestedWeight;return{id:exercise.id,name:exercise.name,muscle:exercise.muscle,sets,reps,suggestedWeight,prescriptionRationale:deload&&suggestedWeight?`Deload signal active. ${prescription.rationale} Suggested load reduced another 10%.`:prescription.rationale}});
+  const exercises=selected.map((exercise,index)=>{const slots=selected.length-index;const sets=Math.max(2,Math.min(deload?3:5,Math.round(remaining/slots)));remaining-=sets;const compound=exercise.compound;const trend=args.intelligence?.exerciseInsights.find(item=>item.exerciseId===exercise.id)?.volumeTrendPct??0;const reps=deload?(compound?8:10):compound?(trend<-8?8:targetXP>=200?6:8):10;const insight=args.intelligence?.exerciseInsights.find(item=>item.exerciseId===exercise.id);const prescription=prescribeWorkingWeight({insight,targetReps:reps,catalogId:exercise.id,lastSets:args.lastSetsByExercise?.[exercise.id]??null});const suggestedWeight=deload&&prescription.suggestedWeight?Math.max(5,Math.round(prescription.suggestedWeight*.9/5)*5):prescription.suggestedWeight;return{id:exercise.id,name:exercise.name,muscle:exercise.muscle,sets,reps,suggestedWeight,prescriptionRationale:deload&&suggestedWeight?`Deload signal active. ${prescription.rationale} Suggested load reduced another 10%.`:prescription.rationale}});
+  pairSupersets(exercises,selected);
   const totalSets=exercises.reduce((sum,exercise)=>sum+exercise.sets,0);const projectedXP=projectedSessionXP(totalSets,estimatedMinutes,args.snapshot.streakDays);const historyText=args.intelligence?.recent.length?` Your last ${args.intelligence.recent.length} sessions averaged ${args.intelligence.averageXP} XP over ${args.intelligence.averageDuration} minutes.`:'';const rationale=deload?`VitalQuest detected a fatigue pattern and converted this request into a lower-volume ${resolvedFocus}-body deload. ${args.intelligence?.deloadReason??''}`:args.focus==='adaptive'?`VitalQuest used your progression balance, recent resistance mix, equipment profile, ${args.snapshot.thisWeekResistanceWorkouts} resistance sessions this week, and ${args.snapshot.streakDays}-day streak to choose a ${resolvedFocus}-body emphasis near ${targetXP} XP.${historyText}`:`You selected ${resolvedFocus}-body training. VitalQuest filtered movements to your equipment and scaled exercise count, working sets and duration toward a ${targetXP} XP target.${historyText}`;
   const strongest=args.intelligence?.strongestTrend;const needsAttention=args.intelligence?.needsAttention;const coachingNote=deload?(args.intelligence?.deloadReason??'Reduce volume and rebuild quality.'):strongest&&strongest.volumeTrendPct>4?`${strongest.name} volume is trending +${strongest.volumeTrendPct}%. Keep progressive overload in play while preserving total-session balance.`:needsAttention&&needsAttention.volumeTrendPct<-6?`${needsAttention.name} volume is trending ${needsAttention.volumeTrendPct}%. Compound targets stay conservative instead of forcing intensity.`:args.intelligence?.recent.length?'Recent workload is stable. This plan prioritizes balanced progression over a large single-session spike.':'Complete a few sessions and the Forge will calibrate exercise-specific progression from your history.';const qualityScore=scorePlan({targetXP,projectedXP,exercises,snapshot:args.snapshot,intelligence:args.intelligence});
   return{id:`forge-${Date.now()}`,name:`${deload?'Deload · ':''}${targetXP} XP ${resolvedFocus==='full'?'Full Body':resolvedFocus==='upper'?'Upper Body':'Lower Body'} Trial`,focus:resolvedFocus,targetXP,projectedXP,estimatedMinutes,rationale,coachingNote,qualityScore,qualityLabel:qualityLabel(qualityScore),deload,exercises};

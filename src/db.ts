@@ -117,6 +117,12 @@ export async function migrateDb(db: SQLiteDatabase) {
       created_at TEXT NOT NULL
     );
   `);
+
+  // v2 columns: per-set RPE (1-10) and set kind (warm-up sets don't earn XP).
+  const setCols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(exercise_sets)`);
+  const setColNames = new Set(setCols.map((c) => c.name));
+  if (!setColNames.has('rpe')) await db.execAsync(`ALTER TABLE exercise_sets ADD COLUMN rpe REAL`);
+  if (!setColNames.has('set_kind')) await db.execAsync(`ALTER TABLE exercise_sets ADD COLUMN set_kind TEXT NOT NULL DEFAULT 'working'`);
 }
 
 export type BankedAttributeGain={attribute:'strength'|'stamina'|'agility'|'vitality'|'discipline'|string;amount:number;reason:string;};
@@ -161,7 +167,7 @@ async function writeSessionBase(db:SQLiteDatabase,input:BaseSession&{sets?:Array
   return {...trust,attributeGains};
 }
 
-export async function saveCompletedWorkout(db:SQLiteDatabase,input:BaseSession&{sets:Array<{id:string;exerciseId:string;exerciseName:string;setNumber:number;weight:number;reps:number;isPR:boolean;completedAt?:string;}>;}):Promise<SessionSaveResult>{let trust:SessionSaveResult|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,exerciseIds:input.sets.map(set=>set.exerciseId),verificationEvidence:{completedUnits:input.sets.length,totalVolume:input.totalVolume,...input.verificationEvidence},syncDetails:{...input.syncDetails,sets:input.sets}});for(const set of input.sets){await db.runAsync(`INSERT INTO exercise_sets (id, session_id, exercise_id, exercise_name, set_number, weight, reps, is_pr, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,set.id,input.sessionId,set.exerciseId,set.exerciseName,set.setNumber,set.weight,set.reps,set.isPR?1:0,set.completedAt??input.completedAt);}});return trust!;}
+export async function saveCompletedWorkout(db:SQLiteDatabase,input:BaseSession&{sets:Array<{id:string;exerciseId:string;exerciseName:string;setNumber:number;weight:number;reps:number;isPR:boolean;rpe?:number|null;setKind?:'warmup'|'working';completedAt?:string;}>;}):Promise<SessionSaveResult>{let trust:SessionSaveResult|null=null;await db.withTransactionAsync(async()=>{const workingSets=input.sets.filter(set=>set.setKind!=='warmup');trust=await writeSessionBase(db,{...input,exerciseIds:workingSets.map(set=>set.exerciseId),verificationEvidence:{completedUnits:workingSets.length,totalVolume:input.totalVolume,...input.verificationEvidence},syncDetails:{...input.syncDetails,sets:input.sets}});for(const set of input.sets){await db.runAsync(`INSERT INTO exercise_sets (id, session_id, exercise_id, exercise_name, set_number, weight, reps, is_pr, rpe, set_kind, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,set.id,input.sessionId,set.exerciseId,set.exerciseName,set.setNumber,set.weight,set.reps,set.isPR?1:0,set.rpe??null,set.setKind??'working',set.completedAt??input.completedAt);}});return trust!;}
 
 export async function saveCompletedEnduranceSession(db:SQLiteDatabase,input:BaseSession&{distanceMiles:number;avgPaceSeconds:number;activityType?:'run'|'walk'|'bike'|string;}):Promise<SessionSaveResult>{let trust:SessionSaveResult|null=null;await db.withTransactionAsync(async()=>{trust=await writeSessionBase(db,{...input,verificationEvidence:{modality:'endurance',completedUnits:1,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,...input.verificationEvidence},syncDetails:{...input.syncDetails,distanceMiles:input.distanceMiles,avgPaceSeconds:input.avgPaceSeconds,activityType:input.activityType??'run'}});await db.runAsync(`INSERT INTO endurance_sessions (id, session_id, distance_miles, duration_minutes, avg_pace_seconds, activity_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,`${input.sessionId}-endurance`,input.sessionId,input.distanceMiles,input.durationMinutes,input.avgPaceSeconds,input.activityType??'run',input.completedAt);});return trust!;}
 

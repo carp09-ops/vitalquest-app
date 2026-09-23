@@ -17,7 +17,7 @@ import BrandLoadingScreen from './BrandLoadingScreen';
 import { BrandWordmark } from './BrandWordmark';
 import DataStatePanel from './DataStatePanel';
 import AttributeStrip from './AttributeStrip';
-import { heroArtForArchetype } from './artAssets';
+import { ART } from './artAssets';
 
 export default function TodayV3(){
   const {width}=useWindowDimensions();const wide=width>=900;const compact=width<430;
@@ -32,7 +32,7 @@ export default function TodayV3(){
   return <SafeAreaView style={styles.safe}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.page,wide&&styles.pageWide]}><View style={styles.shell}>
     <Entrance><View style={styles.brandRow}><View style={styles.brandLockup}><BrandWordmark size={21}/><Text style={styles.brandLine}>YOUR ARC · IN MOTION</Text></View><View style={[styles.realmPill,{borderColor:material.edgeStrong,backgroundColor:material.railSurface}]}><Text style={[styles.realmPillText,{color:palette.highlight}]}>{hero.archetypeName.toUpperCase()} WORLD</Text></View></View><View style={styles.brandRule}/></Entrance>
 
-    <Entrance delay={30}><ImageBackground source={{uri:heroArtForArchetype(archetype)}} resizeMode="cover" imageStyle={[styles.stageImage,wide&&styles.stageImageWide]} style={[styles.stage,{borderColor:material.edgeStrong}]}>
+    <Entrance delay={30}><ImageBackground source={{uri:ART.tabArt.today}} resizeMode="cover" imageStyle={[styles.stageImage,wide&&styles.stageImageWide]} style={[styles.stage,{borderColor:material.edgeStrong}]}>
       <View style={styles.stageVeil}/><View style={[styles.stageGlow,{backgroundColor:material.glow}]}/>
 
       <View style={[styles.stageHeader,wide&&styles.stageHeaderWide]}>

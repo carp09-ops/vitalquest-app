@@ -2,6 +2,7 @@ import React, { PropsWithChildren, useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 import { useVitalTheme } from './ThemeProvider';
 import { useHeroArchetype } from './useHeroArchetype';
+import { tabArtForRoute } from './artAssets';
 import WorldArt from './WorldArt';
 
 type Scene = 'today' | 'train' | 'quests' | 'armory' | 'hero';
@@ -35,7 +36,7 @@ export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ s
 
   return (
     <View style={[styles.root, { backgroundColor: t.background }]}> 
-      <WorldArt archetype={archetype} strength={scene==='hero'?'medium':'soft'} position="top" />
+      <WorldArt archetype={archetype} strength={scene==='hero'?'medium':'soft'} position="top" artUri={tabArtForRoute(scene)} />
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <View style={[styles.worldVeil,{backgroundColor:atmosphere.veil}]} />
         <View style={[styles.worldGlow,{backgroundColor:atmosphere.glow}]} />

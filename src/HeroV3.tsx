@@ -13,7 +13,9 @@ import { ATTRIBUTE_AURA, auraOpacityForTier } from './attributeAuras';
 import HeroInspect from './HeroInspect';
 import LegendTimeline from './LegendTimeline';
 import DayOneVsNow from './DayOneVsNow';
+import MilestonesWall from './MilestonesWall';
 import { getDayOneComparison, getLegendTimeline, type DayOneComparison, type LegendEntry } from './legend';
+import { getMilestones, type Milestone } from './milestones';
 import DataStatePanel from './DataStatePanel';
 import { AnimatedBar, Entrance } from './Interaction';
 
@@ -29,9 +31,11 @@ export default function HeroV3(){
  const db=useSQLiteContext();
  const [legend,setLegend]=useState<LegendEntry[]|null>(null);
  const [comparison,setComparison]=useState<DayOneComparison|null>(null);
+ const [milestones,setMilestones]=useState<Milestone[]|null>(null);
  useEffect(()=>{let active=true;
    getLegendTimeline(db).then(entries=>{if(active)setLegend(entries)}).catch(()=>{if(active)setLegend([])});
    getDayOneComparison(db).then(c=>{if(active)setComparison({...c,now:{...c.now,level:snapshot.level,streakDays:snapshot.streakDays}})}).catch(()=>{if(active)setComparison(null)});
+   getMilestones(db).then(m=>{if(active)setMilestones(m)}).catch(()=>{if(active)setMilestones([])});
    return()=>{active=false};
  },[db]);
  if(loading)return <SafeAreaView style={[s.safe,{backgroundColor:t.background}]}><View style={s.state}><DataStatePanel kind="loading" title="Loading your evolution" copy="Reading levels, attributes and lifetime progression." icon="xp"/></View></SafeAreaView>;
@@ -44,6 +48,8 @@ export default function HeroV3(){
   {comparison&&comparison.firstSession?<Entrance delay={60}><DayOneVsNow data={comparison} highlight={palette.highlight}/></Entrance>:null}
 
   {legend?<Entrance delay={70}><LegendTimeline entries={legend} highlight={palette.highlight}/></Entrance>:null}
+
+  {milestones&&milestones.length>0?<Entrance delay={75}><MilestonesWall milestones={milestones} highlight={palette.highlight}/></Entrance>:null}
 
   <Entrance delay={80}><View><View style={s.sectionHead}><View><Text style={[s.kicker,{color:palette.highlight}]}>ATTRIBUTE PROFILE</Text><Text style={[s.sectionTitle,{color:t.text}]}>Your build.</Text></View><Text style={[s.small,{color:t.muted}]}>STRONGEST · {LABEL[dominant].toUpperCase()}</Text></View><View style={[s.attrGrid,wide&&s.attrGridWide]}>{attrs.map(key=>{const a=hero.attributes[key];const aura=ATTRIBUTE_AURA[key].aura;const max=Math.max(a.nextThreshold??a.xp,1);const pct=a.nextThreshold==null?100:Math.min(100,Math.round((a.xp/max)*100));return <View key={key} style={[s.attr,{borderColor:key===dominant?material.edgeStrong:material.edge,backgroundColor:key===dominant?material.elevatedSurface:material.railSurface}]}><View style={s.attrTop}><View style={[s.attrIcon,{borderColor:material.edge}]}><IconArt name={ICON[key]} size={30} tint={aura}/></View><View style={{flex:1}}><Text style={[s.attrName,{color:t.text}]}>{LABEL[key]}</Text><Text style={[s.small,{color:t.muted}]}>TIER {a.tier} · {a.tierTitle.toUpperCase()} · {a.xp.toLocaleString()} XP</Text></View><Text style={[s.attrPct,{color:key===dominant?aura:t.text}]}>{pct}%</Text></View><View style={s.pips}>{[1,2,3,4,5].map(i=><View key={i} style={[s.pip,{backgroundColor:i<=a.tier?aura:'rgba(255,255,255,.13)'}]}/>)}</View><Text style={[s.attrVisual,{color:t.muted}]}>{a.visual}</Text><AnimatedBar progress={pct/100} color={aura} trackStyle={[s.track,{backgroundColor:t.surfaceElevated}]} barStyle={s.fill}/></View>})}</View></View></Entrance>
 

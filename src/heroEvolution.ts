@@ -128,7 +128,7 @@ export const ATTRIBUTE_VISUALS: Record<HeroArchetype, Record<HeroAttribute, read
   },
 };
 
-function formTierForLevel(level: number): HeroTier {
+export function formTierForLevel(level: number): HeroTier {
   if (level >= 17) return 5;
   if (level >= 13) return 4;
   if (level >= 9) return 3;

@@ -32,7 +32,7 @@ function isHeroAttribute(value: string): value is HeroAttribute {
   return value in ATTRIBUTE_TIER_TITLES;
 }
 
-function longestStreak(sessions: { completed_at: string }[]): { days: number; endDate: string } {
+export function longestStreak(sessions: { completed_at: string }[]): { days: number; endDate: string } {
   const days = [...new Set(sessions.map((s) => s.completed_at.slice(0, 10)))].sort();
   let best = 0; let bestEnd = ''; let run = 0; let prev = '';
   for (const day of days) {

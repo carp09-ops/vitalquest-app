@@ -2,6 +2,7 @@ import { fonts } from './designSystem';
 import React,{useEffect,useRef} from 'react';
 import { Animated,Easing,Image,ImageBackground,Platform,StyleSheet,Text,View,useWindowDimensions } from 'react-native';
 import { useReducedMotion } from './Interaction';
+import { BrandWordmark } from './BrandWordmark';
 import { ART } from './artAssets';
 
 type Variant='launch'|'calibrating';
@@ -47,7 +48,7 @@ export default function BrandLoadingScreen({variant='launch',message}:{variant?:
             <Animated.View style={[styles.orbit,{opacity:pulse,transform:[{rotate}]}]}><View style={styles.orbitNode}/></Animated.View>
             <View style={styles.logoDisc}><Image source={{uri:ART.branding.icon512}} resizeMode="contain" style={styles.logo}/></View>
           </View>
-          <Text style={styles.wordmark}>VITALQUEST</Text>
+          <View style={styles.wordmarkWrap}><BrandWordmark size={25}/></View>
           <Text style={styles.tagline}>MORE YOU AHEAD</Text>
         </View>
         <View style={styles.statusBlock}>
@@ -73,7 +74,7 @@ const styles=StyleSheet.create({
   orbitNode:{position:'absolute',top:-3,left:'50%',marginLeft:-3,width:6,height:6,borderRadius:3,backgroundColor:'#F3D6A0',shadowColor:'#F3D6A0',shadowOpacity:.9,shadowRadius:8},
   logoDisc:{width:92,height:92,borderRadius:46,backgroundColor:'rgba(5,7,9,.72)',borderWidth:1,borderColor:'rgba(245,231,205,.18)',alignItems:'center',justifyContent:'center'},
   logo:{width:72,height:72},
-  wordmark:{color:'#F6F0E7',fontSize:25,fontWeight:'700',letterSpacing:6.5,textAlign:'center',marginTop:16,textShadowColor:'rgba(0,0,0,.60)',textShadowRadius:12},
+  wordmarkWrap:{marginTop:16},
   tagline:{color:'rgba(235,218,189,.72)',fontSize:9,fontWeight:'800',letterSpacing:3,marginTop:7},
   statusBlock:{width:'100%',maxWidth:520,alignItems:'center',marginBottom:38},
   progressRail:{width:88,height:3,borderRadius:99,overflow:'hidden',backgroundColor:'rgba(255,255,255,.12)'},

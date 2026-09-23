@@ -36,7 +36,7 @@ export default function WorldBackdrop({ scene, children }: PropsWithChildren<{ s
 
   return (
     <View style={[styles.root, { backgroundColor: t.background }]}> 
-      <WorldArt archetype={archetype} strength={scene==='hero'?'medium':'soft'} position="top" artUri={tabArtForRoute(scene)} />
+      <WorldArt archetype={archetype} strength={scene==='hero'?'medium':'soft'} position="top" artUri={tabArtForRoute(scene,archetype)} />
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <View style={[styles.worldVeil,{backgroundColor:atmosphere.veil}]} />
         <View style={[styles.worldGlow,{backgroundColor:atmosphere.glow}]} />

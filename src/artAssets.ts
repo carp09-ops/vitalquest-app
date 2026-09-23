@@ -17,25 +17,49 @@ const HERO_ART={
   spartan:`${ART_BASE}/worlds/spartan/hero.webp`,
 } as const;
 
-const TAB_ART={
-  today:`${ART_BASE}/tabs/tab-today.webp`,
-  trials:`${ART_BASE}/tabs/tab-trials.webp`,
-  quests:`${ART_BASE}/tabs/tab-quests.webp`,
-  armory:`${ART_BASE}/tabs/tab-armory.webp`,
-  hero:`${ART_BASE}/tabs/tab-hero.webp`,
+export type TabArtKey='today'|'trials'|'quests'|'armory'|'hero';
+
+type TabArtSet=Record<TabArtKey,string>;
+
+const TAB_ART:Record<HeroArchetype,TabArtSet>={
+  mystic:{
+    today:`${ART_BASE}/tabs/mystic/tab-today.webp`,
+    trials:`${ART_BASE}/tabs/mystic/tab-trials.webp`,
+    quests:`${ART_BASE}/tabs/mystic/tab-quests.webp`,
+    armory:`${ART_BASE}/tabs/mystic/tab-armory.webp`,
+    hero:`${ART_BASE}/tabs/mystic/tab-hero.webp`,
+  },
+  athlete:{
+    today:`${ART_BASE}/tabs/athlete/tab-today.webp`,
+    trials:`${ART_BASE}/tabs/athlete/tab-trials.webp`,
+    quests:`${ART_BASE}/tabs/athlete/tab-quests.webp`,
+    armory:`${ART_BASE}/tabs/athlete/tab-armory.webp`,
+    hero:`${ART_BASE}/tabs/athlete/tab-hero.webp`,
+  },
+  spartan:{
+    today:`${ART_BASE}/tabs/spartan/tab-today.webp`,
+    trials:`${ART_BASE}/tabs/spartan/tab-trials.webp`,
+    quests:`${ART_BASE}/tabs/spartan/tab-quests.webp`,
+    armory:`${ART_BASE}/tabs/spartan/tab-armory.webp`,
+    hero:`${ART_BASE}/tabs/spartan/tab-hero.webp`,
+  },
 } as const;
 
-export type TabArtKey=keyof typeof TAB_ART;
+const TAB_ROUTE_TO_KEY:Record<string,TabArtKey>={
+  train:'trials',
+  quests:'quests',
+  armory:'armory',
+  hero:'hero',
+};
 
-/** Distinct world artwork per tab route: index->today, train->trials, etc. */
-export function tabArtForRoute(route:string|null|undefined):string{
-  switch(route){
-    case 'train':return TAB_ART.trials;
-    case 'quests':return TAB_ART.quests;
-    case 'armory':return TAB_ART.armory;
-    case 'hero':return TAB_ART.hero;
-    default:return TAB_ART.today;
-  }
+/** Distinct artwork for a world + tab. Falls back to the athlete world. */
+export function tabArtFor(archetype:HeroArchetype,tab:TabArtKey):string{
+  return TAB_ART[archetype]?.[tab] ?? TAB_ART.athlete[tab];
+}
+
+/** Distinct world artwork per tab route and chosen world: index->today, train->trials, etc. */
+export function tabArtForRoute(route:string|null|undefined,archetype:HeroArchetype='athlete'):string{
+  return tabArtFor(archetype,TAB_ROUTE_TO_KEY[route ?? ''] ?? 'today');
 }
 
 export const ART={

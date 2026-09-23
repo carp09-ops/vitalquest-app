@@ -18,6 +18,8 @@ export interface Milestone {
   /** 0..1 progress for locked milestones. */
   progress?: number;
   progressLabel?: string;
+  /** e.g. "7 TRIALS TO GO" — the hunt, in words. */
+  remainingText?: string;
 }
 
 export interface MilestoneContext {
@@ -69,7 +71,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
     howTo: 'Reach level 10',
     icon: 'xp', accent: '#4EA8FF',
     earned: !!level10, date: level10,
-    ...(!level10 ? { progress: Math.min(1, ctx.level / 10), progressLabel: `LEVEL ${ctx.level} / 10` } : {}),
+    ...(!level10 ? { progress: Math.min(1, ctx.level / 10), progressLabel: `LEVEL ${ctx.level} / 10`, remainingText: `${10 - ctx.level} LEVELS TO GO` } : {}),
   });
 
   (FORM_LEVELS as readonly number[]).slice(1).forEach((formLevel, i) => {
@@ -81,7 +83,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
       howTo: `Reach level ${formLevel}`,
       icon: 'strength', accent: GOLD,
       earned: !!date, date,
-      ...(!date ? { progress: Math.min(1, ctx.level / formLevel), progressLabel: `LEVEL ${ctx.level} / ${formLevel}` } : {}),
+      ...(!date ? { progress: Math.min(1, ctx.level / formLevel), progressLabel: `LEVEL ${ctx.level} / ${formLevel}`, remainingText: `${formLevel - ctx.level} LEVELS TO GO` } : {}),
     });
   });
 
@@ -96,7 +98,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
     icon: paragonAttr ? attrIcon(paragonAttr) : 'trophy',
     accent: paragonAttr ? ATTRIBUTE_AURA[paragonAttr].aura : GOLD,
     earned: !!paragonEntry, date: paragonEntry?.date,
-    ...(!paragonEntry ? { progress: Math.min(1, ctx.maxAttributeTier / 5), progressLabel: `TIER ${ctx.maxAttributeTier} / V` } : {}),
+    ...(!paragonEntry ? { progress: Math.min(1, ctx.maxAttributeTier / 5), progressLabel: `TIER ${ctx.maxAttributeTier} / V`, remainingText: `ONE ATTRIBUTE TO TIER V` } : {}),
   });
 
   const sessionDefs = [
@@ -111,7 +113,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
       howTo: `Complete ${def.count} trials`,
       icon: def.icon, accent: GOLD,
       earned: !!date, date,
-      ...(!date ? { progress: Math.min(1, ctx.sessionCount / def.count), progressLabel: `${ctx.sessionCount} / ${def.count}` } : {}),
+      ...(!date ? { progress: Math.min(1, ctx.sessionCount / def.count), progressLabel: `${ctx.sessionCount} / ${def.count}`, remainingText: `${def.count - ctx.sessionCount} TRIALS TO GO` } : {}),
     });
   }
 
@@ -123,7 +125,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
     howTo: 'Reach a 30-day streak',
     icon: 'streak', accent: '#3EE6C4',
     earned: streakBest, date: streakBest ? streakDate : undefined,
-    ...(!streakBest ? { progress: Math.min(1, ctx.longestStreakDays / 30), progressLabel: `${ctx.longestStreakDays} / 30 DAYS` } : {}),
+    ...(!streakBest ? { progress: Math.min(1, ctx.longestStreakDays / 30), progressLabel: `${ctx.longestStreakDays} / 30 DAYS`, remainingText: `${30 - ctx.longestStreakDays} DAYS TO GO` } : {}),
   });
 
   const titanDate = at('volume-25000');
@@ -133,7 +135,7 @@ export function buildMilestones(entries: LegendEntry[], ctx: MilestoneContext): 
     howTo: 'Lift 25,000 lifetime volume',
     icon: 'strength', accent: '#FF6B35',
     earned: !!titanDate, date: titanDate,
-    ...(!titanDate ? { progress: Math.min(1, ctx.totalVolume / 25000), progressLabel: `${Math.round(ctx.totalVolume).toLocaleString()} / 25,000` } : {}),
+    ...(!titanDate ? { progress: Math.min(1, ctx.totalVolume / 25000), progressLabel: `${Math.round(ctx.totalVolume).toLocaleString()} / 25,000`, remainingText: `${Math.max(0, 25000 - ctx.totalVolume).toLocaleString()} VOLUME TO GO` } : {}),
   });
 
   return milestones;

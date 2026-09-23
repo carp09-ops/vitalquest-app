@@ -24,16 +24,21 @@
           "isBackgroundDeliveryEnabled": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-splash-screen"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vitalquestapp.mobile"
+      "bundleIdentifier": "com.vitalquestapp.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.vitalquestapp.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#090B0F"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#05070A"
       }
     },
     "web": {
@@ -43,6 +48,12 @@
     "experiments": {
       "typedRoutes": true,
       "baseUrl": "/vitalquest-app"
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05070A"
     }
   }
 }
